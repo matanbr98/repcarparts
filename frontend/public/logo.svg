@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="64" viewBox="0 0 240 64" fill="none">
+  <rect x="0" y="0" width="240" height="64" rx="14" fill="#0B1220"/>
+  <path d="M44 41c7.2 0 13-5.8 13-13S51.2 15 44 15s-13 5.8-13 13 5.8 13 13 13Z" fill="#2563EB"/>
+  <path d="M44 35.5c4.1 0 7.5-3.4 7.5-7.5S48.1 20.5 44 20.5 36.5 23.9 36.5 28s3.4 7.5 7.5 7.5Z" fill="#93C5FD"/>
+  <path d="M26 44h36" stroke="#1F2937" stroke-width="6" stroke-linecap="round" opacity="0.0"/>
+  <text x="70" y="28" font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#E5E7EB" font-weight="700">rep-car-parts</text>
+  <text x="70" y="46" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#93C5FD">garage " service " receipts</text>
+</svg>
+
