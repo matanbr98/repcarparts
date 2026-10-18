@@ -1,0 +1,55 @@
+# NOTE: this file supersedes the old `.gitignore.txt` (which git never honoured).
+
+# Python virtualenvs
+.venv/
+venv/
+backend/venv/
+backend/.venv/
+env/
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# Databases (never commit user data)
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.db-journal
+
+# Uploaded files and local dev data
+backend/uploads/
+backend/.devdata/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
