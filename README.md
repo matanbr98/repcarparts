@@ -1,157 +1,107 @@
-# Repcarparts
+# 🚗 repcarparts
+Repcarparts is a full-stack web application that helps users track vehicle maintenance, manage replaced car parts, and maintain a complete service history.
 
-Repcarparts is a full-stack web app for tracking vehicle maintenance: cars, service
-records with receipt photos, replaced parts, costs and upcoming service reminders.
+Keeping service paperwork, receipts and mileage in one place is easy to neglect. Repcarparts gives each owner a personal garage: add your cars, log every service with its cost and receipt photo, and see at a glance which maintenance items are due. Managers can additionally send reminders to users and view usage statistics.
 
-## Features
+## ✨ Features
+- **Garage dashboard** – all cars on one screen with odometer, last service, total spend and the most urgent maintenance status
+- **Vehicle management** – add, edit and delete cars; manual odometer updates
+- **Service history & timeline** – add, edit and delete service records with replaced parts, notes and costs; filter and search by text, type, year or date range
+- **Maintenance status** – per item, based on both date and mileage: ok / due soon / overdue / unknown
+- **Odometer consistency warnings** – readings that go backwards, implausible distances and duplicates are flagged (warnings never block saving)
+- **Expenses & reports** – totals per treatment type, month and year with a spend chart, plus CSV export of the (filtered) service history
+- **Receipts** – attach, replace, remove and preview receipt photos
+- **Reminders** – managers can broadcast or target reminders to users (optionally per car); users can add their own, mark them done or delete them
+- **Manager area** – users list, statistics and average part costs
+- **Accounts & roles** – registration/login with `user` and `manager` roles, profile picture and password change
+- **Responsive UI** – redesigned interface with the Repcarparts logo
 
-- Accounts with roles: `user` and `manager`; JWT authentication
-- Cars: create, edit, delete
-- Service records: create, edit, delete, receipt photo (replace / remove), filter and search
-  (text, type, year, date range), newest first
-- CSV export of the (filtered) service history, Excel-friendly with Hebrew support
-- Maintenance status per item based on both date and mileage: ok / due soon / overdue / unknown
-- Garage overview: one call for the home screen with per-car odometer, last service, spend and worst status
-- Expenses: totals, per treatment type, per month, per year
-- Reminders: managers broadcast or target users (optionally for a specific car); users add their
-  own reminders, mark them done or delete them
-- Manager area: users list, statistics, average part costs
-- Manual odometer with consistency warnings (readings that go backwards, implausible distances,
-  duplicates) - warnings never block saving
-- Future-dated services are saved as "Scheduled" and only count for maintenance status once their date arrives
-- Security hardening: strong-secret enforcement, rate-limited login, validated image uploads,
-  token invalidation on password change, no default admin account
+## 🛠 Tech Stack
+- **Backend:** FastAPI (Python), SQLAlchemy, Alembic migrations
+- **Frontend:** React 19, React Router, Vite
+- **Storage:** SQLite database file + local folder for uploaded receipts
+- **Auth:** JWT (python-jose), hashed passwords (passlib), role-based authorization
+- **Tests:** pytest (backend), Vitest + Testing Library (frontend), ESLint
 
-## Tech stack
+## 🏗 Architecture
+The React single-page app talks to the FastAPI REST API over HTTP using a JWT bearer token. The API validates input, applies the maintenance and odometer logic, and persists data with SQLAlchemy to SQLite; the schema is managed by Alembic migrations that run automatically on startup. Receipt images are validated and stored on the local filesystem.
 
-| Layer | Technology |
-|---|---|
-| Backend | FastAPI, SQLAlchemy, SQLite, Alembic migrations |
-| Auth | JWT (python-jose), passlib password hashes |
-| Frontend | React 19, React Router, Vite |
-| Tests | pytest + FastAPI TestClient (backend), Vitest + Testing Library (frontend) |
+Further details: [API contract](docs/API_CONTRACT.md) · [Architecture notes](docs/ARCHITECTURE.md) · [Local run guide](docs/RUNNING.md)
 
-The API contract lives in [docs/API_CONTRACT.md](docs/API_CONTRACT.md); design notes in
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); a step-by-step local run in
-[docs/RUNNING.md](docs/RUNNING.md).
+## 📦 Project Structure
 
-## Quick start (Windows PowerShell)
+```
+backend/      FastAPI app (app/), Alembic migrations (alembic/), tests (tests/)
+frontend/     React + Vite app (src/)
+docs/         API contract, architecture, run guide
+.env.example  backend configuration reference
+```
+
+## 🚀 Getting Started
+
+**Prerequisites:** Python 3.10+, Node.js 20.19+ or 22.12+, Git.
+
+```bash
+git clone https://github.com/matanbr98/repcarparts.git
+cd repcarparts
+```
 
 ### Backend
-
-```powershell
-cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+From `backend/`:
+```bash
+python -m venv .venv
+source .venv/bin/activate        # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-
-# generate a secret once
-python -c "import secrets;print(secrets.token_urlsafe(48))"
-
-$env:JWT_SECRET    = "<paste the generated secret>"
-$env:DATABASE_PATH = "$PWD\.devdata\repcarparts.db"   # optional, default backend/repcarparts.db
-$env:UPLOAD_DIR    = "$PWD\.devdata\uploads"          # optional, default backend/uploads
-uvicorn app.main:app --reload --port 8000
 ```
 
-Database migrations (Alembic) are applied automatically on startup.
-For local development without a secret you may set `$env:APP_ENV = "dev"`.
-All variables are listed in [.env.example](.env.example).
+Configure it with environment variables. The backend reads the process environment (it does not load `.env` files by itself), so export the values listed in [`.env.example`](.env.example). `JWT_SECRET` (at least 32 characters) is required unless `APP_ENV=dev`:
 
-### Clean development database
-
-Nothing needs to be created by hand: when `DATABASE_PATH` points to a file that does not exist,
-the server creates it and applies all Alembic migrations on startup. Use a git-ignored folder:
-
-```powershell
-cd backend
-New-Item -ItemType Directory .devdata\uploads -Force
-$env:DATABASE_PATH = "$PWD\.devdata\repcarparts.db"
-$env:UPLOAD_DIR    = "$PWD\.devdata\uploads"
-$env:ADMIN_USERNAME = "admin"; $env:ADMIN_PASSWORD = "<strong password>"   # first start only
-uvicorn app.main:app --port 8000
+```bash
+export JWT_SECRET="$(python -c 'import secrets;print(secrets.token_urlsafe(48))')"
+export CORS_ORIGINS="http://localhost:5173"
+# PowerShell: $env:JWT_SECRET = "<generated secret>"
 ```
 
-Log in as that admin (you are asked to choose a new password), then register normal users in
-the UI. To start over, stop the server and delete `.devdata`. The default location
-(`backend/repcarparts.db`, `backend/uploads`) is also git-ignored.
+Start the API (default `http://127.0.0.1:8000`):
+```bash
+uvicorn app.main:app --reload
+```
 
-### Admin / manager account
+**Clean development database:** nothing has to be created by hand. If the file at `DATABASE_PATH` (default `backend/repcarparts.db`) does not exist, it is created and all migrations are applied at startup. To use a throwaway database, point `DATABASE_PATH` and `UPLOAD_DIR` at a git-ignored folder such as `backend/.devdata/` and delete it to start over.
 
-There is no default account. Set (or reset) a manager password with the CLI:
-
-```powershell
-cd backend
+**First manager account:** there is no default account. Create or reset one with the CLI (prompts for the password, never prints it):
+```bash
 python -m app.cli set-password <username>
 ```
-
-It prompts for the password without echo and never prints it. If a legacy `aa` account with a
-weak password is found in an existing database it is locked automatically
-(`must_change_password`) and must be reset with the command above. Data is never deleted.
-
-A user flagged `must_change_password` (the env-bootstrapped admin, or a locked legacy `aa`) can only
-call `GET /me` and `PUT /me/password` until a new password is set; everything else returns
-`403 password_change_required` and the UI routes to the change-password screen.
-Usernames are not case-sensitive for new registrations.
+Alternatively set `ADMIN_USERNAME` and `ADMIN_PASSWORD` for the first start only. Regular users can register in the UI.
 
 ### Frontend
-
-Requires **Node 20.19+ or 22.12+** (Vite 7). On older Node, `npm run dev` fails with
-`crypto.hash is not a function`; `npm run build` + `npx vite preview` still work.
-
-```powershell
-cd frontend
+From `frontend/`:
+```bash
 npm install
-npm run dev        # http://localhost:5173
-# or, a production build:
-npm run build
-npx vite preview --port 4173    # http://localhost:4173 (add it to CORS_ORIGINS)
+npm run dev
 ```
+The app runs at `http://localhost:5173`. If the API is elsewhere, set `VITE_API_URL` in `frontend/.env` (see `frontend/.env.example`).
 
-Set `VITE_API_URL` (default `http://127.0.0.1:8000`) in `frontend/.env` if the API runs elsewhere.
-
-## Tests
-
-```powershell
-cd backend
-.\venv\Scripts\python.exe -m pytest
+## 🧪 Tests
+Backend, from `backend/` (with the virtual environment active):
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
 ```
-
-```powershell
-cd frontend
-npm test           # vitest
+Frontend, from `frontend/`:
+```bash
+npm test
 npm run lint
+npm run build
 ```
+Backend tests use a temporary database and upload folder, so they never touch your data.
 
-Backend tests use a temporary database and upload folder and set their own environment, so they never
-touch your data. See `backend/tests/`.
+## 🔒 Security Notes
+- Passwords are hashed; changing a password invalidates earlier tokens; login is rate limited.
+- Uploads accept JPEG, PNG or WebP only (max 5 MB), are content-checked and stored under random names.
+- Databases, uploads, virtual environments and `.env` files are git-ignored. Never commit real user data or secrets.
+- This is a local/portfolio project; if you deploy it, restrict `CORS_ORIGINS` and serve it over HTTPS.
 
-## Known behaviour worth knowing
-
-- Costs of future-dated ("Scheduled") services are currently included in expense totals, although
-  they do not count for maintenance status. See
-  [docs/FUTURE_DATED_COSTS.md](docs/FUTURE_DATED_COSTS.md) for the recommended change.
-
-## Project structure
-
-```
-backend/
-  app/            FastAPI application (routers, models, schemas, config, CLI)
-  alembic/        database migrations
-  tests/          pytest suite (written against docs/API_CONTRACT.md)
-  requirements.txt
-frontend/
-  src/            React app
-docs/             API contract, architecture, running guide
-.env.example      configuration reference
-```
-
-## Security notes
-
-- Keep `JWT_SECRET` secret, at least 32 random characters; the server refuses to start without
-  it unless `APP_ENV=dev`.
-- Passwords are stored hashed; changing a password invalidates all earlier tokens.
-- Login is rate limited; registration validates username and password strength.
-- Uploads: JPEG, PNG or WebP only, max 5 MB, content-sniffed, stored under random UUID names.
-- Database files, uploads and `.env` are git-ignored. Never commit real user data.
-- Restrict `CORS_ORIGINS` to your real frontend origin(s) in production and serve over HTTPS.
+## ℹ️ Known Behaviour
+Costs of future-dated ("Scheduled") services are currently included in expense totals although they do not count for maintenance status. See [docs/FUTURE_DATED_COSTS.md](docs/FUTURE_DATED_COSTS.md).
