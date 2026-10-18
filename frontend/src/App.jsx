@@ -1,59 +1,50 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { getAuth } from "./auth";
-import AppShell from "./components/AppShell";
-import Dashboard from './pages/Dashboard';
-import AddCar from './pages/AddCar';
-import CarDetails from './pages/CarDetails';
-import AddRecord from './pages/AddRecord';
-import EditRecord from './pages/EditRecord';
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import ToastProvider from "./components/ui/ToastProvider";
+import AppLayout from "./components/layout/AppLayout";
+import { RequireAuth, RequireManager } from "./components/guards";
+import Garage from "./pages/Garage";
+import AddCar from "./pages/AddCar";
+import EditCar from "./pages/EditCar";
+import CarDetails from "./pages/CarDetails";
+import AddRecord from "./pages/AddRecord";
+import EditRecord from "./pages/EditRecord";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ChangePassword from "./pages/ChangePassword";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import Reminders from "./pages/Reminders";
 import Profile from "./pages/Profile";
-import './index.css';
 
-function RequireAuth({ children }) {
-  const { token } = getAuth();
-  if (!token) return <Login />;
-  return <AppShell>{children}</AppShell>;
-}
-
-function RequireManager({ children }) {
-  const { token, role } = getAuth();
-  if (!token) return <Login />;
-  if (role !== "manager") return <AppShell><Dashboard /></AppShell>;
-  return <AppShell>{children}</AppShell>;
-}
-
-function App() {
+export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<AppShell><Login /></AppShell>} />
-        <Route path="/register" element={<AppShell><Register /></AppShell>} />
+    <ToastProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        {/* Main screen */}
-        <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
-        
-        {/* Screen to add a new car */}
-        <Route path="/add-car" element={<RequireAuth><AddCar /></RequireAuth>} />
-        
-        {/* Screen to see a specific car's history */}
-        <Route path="/car/:id" element={<RequireAuth><CarDetails /></RequireAuth>} />
-        
-        {/* Screen to add a service record to a car */}
-        <Route path="/car/:id/add-record" element={<RequireAuth><AddRecord /></RequireAuth>} />
+          <Route element={<RequireAuth />}>
+            <Route path="/change-password" element={<ChangePassword />} />
 
-        {/* Screen to edit a service record */}
-        <Route path="/car/:id/edit-record/:recordId" element={<RequireAuth><EditRecord /></RequireAuth>} />
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Garage />} />
+              <Route path="/add-car" element={<AddCar />} />
+              <Route path="/car/:id" element={<CarDetails />} />
+              <Route path="/car/:id/edit" element={<EditCar />} />
+              <Route path="/car/:id/add-record" element={<AddRecord />} />
+              <Route path="/car/:id/edit-record/:recordId" element={<EditRecord />} />
+              <Route path="/reminders" element={<Reminders />} />
+              <Route path="/profile" element={<Profile />} />
 
-        <Route path="/manager" element={<RequireManager><ManagerDashboard /></RequireManager>} />
-        <Route path="/reminders" element={<RequireAuth><Reminders /></RequireAuth>} />
-        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-      </Routes>
-    </Router>
+              <Route element={<RequireManager />}>
+                <Route path="/manager" element={<ManagerDashboard />} />
+              </Route>
+            </Route>
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
-
-export default App;

@@ -1,0 +1,56 @@
+/* Design tokens: light theme only. */
+:root {
+  /* brand */
+  --navy-900: #0b1f3a;
+  --navy-700: #1e3a5f;
+  --navy-600: #2a4a75;
+  --teal-500: #14b8a6;
+  --teal-600: #0d9488;
+  --teal-700: #0f766e;
+  --teal-100: #ccfbf1;
+  --teal-50: #effdfa;
+
+  /* surfaces */
+  --bg: #f6f8fb;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* text */
+  --text: #0f172a;
+  --muted: #64748b;
+  --on-navy: #e6edf7;
+  --on-navy-muted: #9db0c8;
+
+  /* status */
+  --ok: #15803d;
+  --ok-bg: #dcfce7;
+  --warn: #b45309;
+  --warn-bg: #fef3c7;
+  --danger: #b91c1c;
+  --danger-bg: #fee2e2;
+  --unknown: #475569;
+  --unknown-bg: #e2e8f0;
+
+  /* shape + rhythm (8px grid) */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --s1: 8px;
+  --s2: 16px;
+  --s3: 24px;
+  --s4: 32px;
+  --s5: 48px;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.18);
+
+  --focus-ring: 0 0 0 3px rgba(20, 184, 166, 0.45);
+  --transition: 150ms ease;
+
+  --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --sidebar-w: 248px;
+  --tabbar-h: 64px;
+}

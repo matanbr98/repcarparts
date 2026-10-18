@@ -1,213 +1,190 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
+import { useAsync } from "../hooks/useAsync";
+import { useToast } from "../components/ui/toastContext";
+import PageHeader from "../components/ui/PageHeader";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Icon from "../components/ui/Icon";
+import { Input } from "../components/ui/Field";
+import ErrorState from "../components/ui/ErrorState";
+import { SkeletonCard } from "../components/ui/Skeleton";
+import Avatar from "../components/Avatar";
+import ChangePasswordForm from "../components/ChangePasswordForm";
+import { validateImage } from "../lib/images";
 
-export default function Profile() {
-  const [me, setMe] = useState(null);
-  const [form, setForm] = useState({ name: "", phone: "", email: "" });
-  const [editing, setEditing] = useState({ name: false, phone: false, email: false });
-  const [pwd, setPwd] = useState({ current: "", next: "", confirm: "" });
-  const [pic, setPic] = useState(null);
-  const [err, setErr] = useState("");
-  const [ok, setOk] = useState("");
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  function isValidEmail(value) {
-    if (!value) return true; // allow clearing email
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  }
+function ProfileForm({ me, onSaved }) {
+  const toast = useToast();
+  const [form, setForm] = useState({ name: me.name || "", phone: me.phone || "", email: me.email || "" });
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    api
-      .me()
-      .then((u) => {
-        setMe(u);
-        setForm({ name: u.name || "", phone: u.phone || "", email: u.email || "" });
-      })
-      .catch((e) => setErr(String(e.message || e)));
-  }, []);
+  const dirty =
+    form.name !== (me.name || "") || form.phone !== (me.phone || "") || form.email !== (me.email || "");
 
-  async function saveField(field) {
-    setErr("");
-    setOk("");
-    if (field === "email" && !isValidEmail(form.email)) {
-      setErr("Please enter a valid email address.");
-      return;
-    }
-    try {
-      const updated = await api.updateMe({ [field]: form[field] });
-      setMe(updated);
-      setEditing((prev) => ({ ...prev, [field]: false }));
-      setOk("Saved.");
-    } catch (e) {
-      setErr(String(e.message || e));
-    }
-  }
+  const set = (k) => (e) => {
+    setForm((p) => ({ ...p, [k]: e.target.value }));
+    setErrors((p) => ({ ...p, [k]: undefined }));
+  };
 
-  async function onChangePassword(e) {
+  async function onSubmit(e) {
     e.preventDefault();
-    setErr("");
-    setOk("");
-    if (!pwd.next || pwd.next !== pwd.confirm) {
-      setErr("New password and confirmation must match.");
+    if (form.email.trim() && !EMAIL_RE.test(form.email.trim())) {
+      setErrors({ email: "Enter a valid email address." });
       return;
     }
+    setSaving(true);
     try {
-      const res = await api.changePassword(pwd.current, pwd.next);
-      if (res?.detail) throw new Error(res.detail);
-      setPwd({ current: "", next: "", confirm: "" });
-      setOk("Password changed.");
-    } catch (e) {
-      setErr(String(e.message || e));
-    }
-  }
-
-  async function onUploadPicture() {
-    if (!pic) return;
-    setErr("");
-    setOk("");
-    try {
-      const updated = await api.uploadProfilePicture(pic);
-      setMe(updated);
-      setPic(null);
-      setOk("Profile picture updated.");
-    } catch (e) {
-      setErr(String(e.message || e));
+      const patch = {};
+      if (form.name !== (me.name || "")) patch.name = form.name.trim();
+      if (form.phone !== (me.phone || "")) patch.phone = form.phone.trim();
+      if (form.email !== (me.email || "")) patch.email = form.email.trim() || null;
+      const updated = await api.updateMe(patch);
+      onSaved(updated);
+      toast.success("Profile saved");
+    } catch (err) {
+      setErrors({ ...(err.fields || {}), form: err.message });
+    } finally {
+      setSaving(false);
     }
   }
 
   return (
-    <div className="card col-6">
-      <h2>My Profile</h2>
-      <div className="row" style={{ justifyContent: "flex-start", marginBottom: 12 }}>
-        <Link to="/" className="btn btn--ghost">← My Garage</Link>
+    <form className="stack" onSubmit={onSubmit} noValidate>
+      <Input label="Name" autoComplete="name" value={form.name} onChange={set("name")} error={errors.name} />
+      <div className="grid-2">
+        <Input label="Phone" type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} error={errors.phone} />
+        <Input label="Email" type="email" autoComplete="email" value={form.email} onChange={set("email")} error={errors.email} />
       </div>
-
-      {me && (
-        <div className="row" style={{ alignItems: "center", justifyContent: "flex-start", gap: 14 }}>
-          <div style={{ width: 54, height: 54, borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.18)" }}>
-            {me.profile_image_url ? (
-              <img
-                src={`http://127.0.0.1:8000/${me.profile_image_url}`}
-                alt="profile"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-              />
-            ) : (
-              <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", background: "rgba(255,255,255,0.06)" }}>
-                <span style={{ fontWeight: 800 }}>{(me.username || "?").slice(0, 1).toUpperCase()}</span>
-              </div>
-            )}
-          </div>
-          <div>
-            <div className="muted">Username</div>
-            <div style={{ fontWeight: 800, fontSize: 18 }}>{me.username}</div>
-          </div>
-        </div>
+      {errors.form && (
+        <p className="form-error" role="alert">
+          <Icon name="alert" size={16} /> {errors.form}
+        </p>
       )}
+      <div>
+        <Button type="submit" variant="primary" loading={saving} disabled={!dirty}>
+          Save details
+        </Button>
+      </div>
+    </form>
+  );
+}
 
-      <div className="card" style={{ marginTop: 12 }}>
-        <h3>Info</h3>
+function PictureUploader({ me, onUpdated }) {
+  const toast = useToast();
+  const inputRef = useRef(null);
+  const [file, setFile] = useState(null);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState("");
 
-        <div style={{ display: "grid", gap: 10 }}>
-          {/* Name */}
-          <div className="row">
-            <div style={{ flex: 1 }}>
-              <div className="muted">Name</div>
-              {editing.name ? (
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              ) : (
-                <div style={{ fontWeight: 650 }}>{me?.name || "—"}</div>
-              )}
-            </div>
-            {editing.name ? (
-              <div className="row" style={{ justifyContent: "flex-end" }}>
-                <button className="btn btn--primary" type="button" onClick={() => saveField("name")}>Save</button>
-                <button className="btn btn--ghost" type="button" onClick={() => { setForm((f) => ({ ...f, name: me?.name || "" })); setEditing((p) => ({ ...p, name: false })); }}>Cancel</button>
-              </div>
-            ) : (
-              <button className="btn btn--ghost" type="button" onClick={() => setEditing((p) => ({ ...p, name: true }))}>Change</button>
-            )}
-          </div>
+  useEffect(() => {
+    if (!file) return undefined;
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
-          {/* Phone */}
-          <div className="row">
-            <div style={{ flex: 1 }}>
-              <div className="muted">Phone</div>
-              {editing.phone ? (
-                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-              ) : (
-                <div style={{ fontWeight: 650 }}>{me?.phone || "—"}</div>
-              )}
-            </div>
-            {editing.phone ? (
-              <div className="row" style={{ justifyContent: "flex-end" }}>
-                <button className="btn btn--primary" type="button" onClick={() => saveField("phone")}>Save</button>
-                <button className="btn btn--ghost" type="button" onClick={() => { setForm((f) => ({ ...f, phone: me?.phone || "" })); setEditing((p) => ({ ...p, phone: false })); }}>Cancel</button>
-              </div>
-            ) : (
-              <button className="btn btn--ghost" type="button" onClick={() => setEditing((p) => ({ ...p, phone: true }))}>Change</button>
-            )}
-          </div>
+  function choose(e) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    const msg = validateImage(f);
+    setError(msg);
+    setFile(msg ? null : f);
+  }
 
-          {/* Email */}
-          <div className="row">
-            <div style={{ flex: 1 }}>
-              <div className="muted">Email</div>
-              {editing.email ? (
-                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-              ) : (
-                <div style={{ fontWeight: 650 }}>{me?.email || "—"}</div>
-              )}
-            </div>
-            {editing.email ? (
-              <div className="row" style={{ justifyContent: "flex-end" }}>
-                <button className="btn btn--primary" type="button" onClick={() => saveField("email")}>Save</button>
-                <button className="btn btn--ghost" type="button" onClick={() => { setForm((f) => ({ ...f, email: me?.email || "" })); setEditing((p) => ({ ...p, email: false })); }}>Cancel</button>
-              </div>
-            ) : (
-              <button className="btn btn--ghost" type="button" onClick={() => setEditing((p) => ({ ...p, email: true }))}>Change</button>
-            )}
-          </div>
+  async function upload() {
+    setSaving(true);
+    try {
+      const updated = await api.uploadProfilePicture(file);
+      onUpdated(updated);
+      setFile(null);
+      setPreview("");
+      toast.success("Profile picture updated");
+    } catch (err) {
+      setError(err.message || "Upload failed.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="cluster profile-pic">
+      {file && preview ? (
+        <span className="avatar" style={{ width: 72, height: 72 }}>
+          <img src={preview} alt="New profile picture preview" />
+        </span>
+      ) : (
+        <Avatar url={me.profile_image_url} name={me.username} size={72} />
+      )}
+      <div className="stack">
+        <div className="cluster">
+          <Button variant="secondary" onClick={() => inputRef.current?.click()}>
+            <Icon name="upload" size={16} /> {file ? "Choose another" : "Change picture"}
+          </Button>
+          {file && (
+            <>
+              <Button variant="primary" onClick={upload} loading={saving}>
+                Save picture
+              </Button>
+              <Button variant="ghost" onClick={() => setFile(null)} disabled={saving}>
+                Cancel
+              </Button>
+            </>
+          )}
         </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="sr-only"
+          aria-label="Profile picture file"
+          onChange={choose}
+        />
+        {error ? (
+          <span className="field__error" role="alert">
+            {error}
+          </span>
+        ) : (
+          <span className="field__hint">JPG, PNG or WebP, up to 5 MB.</span>
+        )}
       </div>
-
-      <div className="card" style={{ marginTop: 12 }}>
-        <h3>Profile picture</h3>
-        <div className="row" style={{ justifyContent: "flex-start" }}>
-          <input type="file" accept="image/*" onChange={(e) => setPic(e.target.files?.[0] || null)} />
-          <button className="btn btn--primary" type="button" onClick={onUploadPicture} disabled={!pic}>
-            Upload
-          </button>
-        </div>
-      </div>
-
-      <div className="card" style={{ marginTop: 12 }}>
-        <h3>Change password</h3>
-        <form onSubmit={onChangePassword}>
-          <input
-            type="password"
-            placeholder="Current password"
-            value={pwd.current}
-            onChange={(e) => setPwd({ ...pwd, current: e.target.value })}
-          />
-          <input
-            type="password"
-            placeholder="New password"
-            value={pwd.next}
-            onChange={(e) => setPwd({ ...pwd, next: e.target.value })}
-          />
-          <input
-            type="password"
-            placeholder="Confirm new password"
-            value={pwd.confirm}
-            onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })}
-          />
-          <button className="btn btn--primary" type="submit">Update password</button>
-        </form>
-      </div>
-
-      {err && <p style={{ color: "crimson", marginTop: 12 }}>Error: {err}</p>}
-      {ok && <p style={{ color: "#93c5fd", marginTop: 12 }}>{ok}</p>}
     </div>
   );
 }
 
+export default function Profile() {
+  const { data, error, loading, reload, setData } = useAsync(() => api.me(), []);
+
+  return (
+    <div className="stack-lg narrow">
+      <PageHeader title="Profile" subtitle={data ? `Signed in as ${data.username}` : undefined} />
+      {error && !data ? (
+        <ErrorState error={error} title="Could not load your profile" onRetry={reload} />
+      ) : loading && !data ? (
+        <>
+          <SkeletonCard />
+          <SkeletonCard lines={4} />
+        </>
+      ) : (
+        <>
+          <Card>
+            <h2 className="card__title">Profile picture</h2>
+            <PictureUploader me={data} onUpdated={(u) => setData((p) => ({ ...p, ...u }))} />
+          </Card>
+          <Card>
+            <h2 className="card__title">Details</h2>
+            <ProfileForm me={data} onSaved={(u) => setData((p) => ({ ...p, ...u }))} />
+          </Card>
+          <Card>
+            <h2 className="card__title">Change password</h2>
+            <ChangePasswordForm />
+          </Card>
+        </>
+      )}
+    </div>
+  );
+}
