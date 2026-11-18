@@ -8,6 +8,8 @@ import Button from "../components/ui/Button";
 import Icon from "../components/ui/Icon";
 import Tabs from "../components/ui/Tabs";
 import StatusPill from "../components/ui/StatusPill";
+import StatCard from "../components/ui/StatCard";
+import Menu, { MenuItem, MenuSeparator } from "../components/ui/Menu";
 import { Input, Select } from "../components/ui/Field";
 import { ConfirmDialog } from "../components/ui/Modal";
 import ErrorState from "../components/ui/ErrorState";
@@ -20,7 +22,7 @@ import DataChecksPanel from "../components/DataChecksPanel";
 import ReceiptLightbox from "../components/ReceiptLightbox";
 import SpendChart from "../components/SpendChart";
 import { TREATMENTS, treatmentLabel } from "../lib/treatments";
-import { exportBaseName, formatKm, formatMoney, formatNumber, vehicleSubtitle, vehicleTitle } from "../lib/format";
+import { exportBaseName, formatDate, formatKm, formatMoney, formatNumber, vehicleSubtitle, vehicleTitle } from "../lib/format";
 
 function useDebounced(value, ms = 300) {
   const [v, setV] = useState(value);
@@ -56,8 +58,12 @@ function ExpensesTab({ carId }) {
 
   return (
     <div className="stack-lg" role="tabpanel" id="panel-expenses" aria-labelledby="tab-expenses">
-      <div className="cluster">
-        <Select label="Period" value={year} onChange={(e) => setYear(e.target.value)}>
+      <div className="spread">
+        <div>
+          <h2 className="section-head__title">Expenses</h2>
+          <p className="muted small">What this vehicle has cost, by service type and month.</p>
+        </div>
+        <Select label="Period" hideLabel value={year} onChange={(e) => setYear(e.target.value)} fieldClassName="period-select">
           <option value="">All time</option>
           {years.map((y) => (
             <option key={y} value={y}>
@@ -72,18 +78,9 @@ function ExpensesTab({ carId }) {
       {data && !error && (
         <>
           <div className="grid-3">
-            <div className="card stat">
-              <span className="muted small">Total spend</span>
-              <strong className="stat__value num">{formatMoney(data.total)}</strong>
-            </div>
-            <div className="card stat">
-              <span className="muted small">{year ? `Spend in ${year}` : "This year"}</span>
-              <strong className="stat__value num">{formatMoney(data.year_total)}</strong>
-            </div>
-            <div className="card stat">
-              <span className="muted small">Services</span>
-              <strong className="stat__value num">{formatNumber(data.records_count)}</strong>
-            </div>
+            <StatCard label="Total spend" value={formatMoney(data.total)} icon="coins" tone="accent" hint={year ? `In ${year}` : "All time"} />
+            <StatCard label={year ? `Spend in ${year}` : "This year"} value={formatMoney(data.year_total)} icon="calendar" />
+            <StatCard label="Services" value={formatNumber(data.records_count)} icon="wrench" hint={year ? `Logged in ${year}` : "Logged in total"} />
           </div>
 
           {data.records_count === 0 ? (
@@ -95,7 +92,10 @@ function ExpensesTab({ carId }) {
           ) : (
             <>
               <section className="card">
-                <h2 className="card__title">By service type</h2>
+                <div className="card__header">
+                  <h2 className="card__title">By service type</h2>
+                  <span className="muted small">Total (services)</span>
+                </div>
                 <ul className="bars">
                   {(data.by_type || []).map((t) => (
                     <li key={t.treatment_type} className="bars__row">
@@ -112,7 +112,9 @@ function ExpensesTab({ carId }) {
               </section>
               {(data.by_month || []).length > 0 && (
                 <section className="card">
-                  <h2 className="card__title">Spend by month</h2>
+                  <div className="card__header">
+                    <h2 className="card__title">Spend by month</h2>
+                  </div>
                   <SpendChart data={data.by_month} />
                 </section>
               )}
@@ -232,149 +234,225 @@ export default function CarDetails() {
   const list = records.data || [];
   const flaggedIds = new Set((overview.data?.warnings || []).flatMap((w) => w.record_ids || []));
 
+  const urgent = (due.data || [])
+    .filter((i) => i.status === "overdue" || i.status === "due_soon")
+    .sort((a, b) => (a.status === "overdue" ? 0 : 1) - (b.status === "overdue" ? 0 : 1))[0];
+  const clearFilters = () => {
+    setQ("");
+    setType("");
+    setYear("");
+  };
+
   return (
     <div className="stack-lg">
       <PageHeader
         back={{ to: "/", label: "Garage" }}
+        leading={
+          <span className={`icon-tile icon-tile--lg icon-tile--${status === "unknown" ? "info" : status}`} aria-hidden="true">
+            <Icon name="car" size={24} />
+          </span>
+        }
         title={vehicleTitle(c)}
-        subtitle={[vehicleSubtitle(c), c.license_plate].filter(Boolean).join(" - ")}
+        subtitle={vehicleSubtitle(c) || undefined}
+        meta={
+          <>
+            {c.license_plate && <span className="plate">{c.license_plate}</span>}
+            {overview.data ? (
+              <StatusPill status={status} />
+            ) : overview.loading ? (
+              <Skeleton width={96} height={22} radius={999} />
+            ) : null}
+          </>
+        }
         actions={
           <>
-            <Button as={Link} to={`/car/${id}/add-record`} variant="primary">
+            <Button as={Link} to={`/car/${id}/add-record`} variant="accent">
               <Icon name="plus" size={16} /> Log service
             </Button>
             <Button as={Link} to={`/car/${id}/edit`} variant="secondary">
               <Icon name="edit" size={16} /> Edit
             </Button>
-            <Button variant="danger-ghost" onClick={() => setConfirmCar(true)}>
-              <Icon name="trash" size={16} /> Delete
-            </Button>
+            <Menu
+              label="More vehicle actions"
+              tooltip="More actions"
+              triggerClassName="btn btn--secondary btn--icon"
+              trigger={<Icon name="more" size={18} />}
+            >
+              <MenuItem icon="gauge" onSelect={() => setOdoOpen(true)}>
+                Update odometer
+              </MenuItem>
+              <MenuItem icon="download" onSelect={exportCsv}>
+                Export history (CSV)
+              </MenuItem>
+              <MenuSeparator />
+              <MenuItem icon="trash" danger onSelect={() => setConfirmCar(true)}>
+                Delete vehicle
+              </MenuItem>
+            </Menu>
           </>
         }
       />
 
-      <div className="cluster">
-        {overview.data ? (
-          <StatusPill status={status} />
-        ) : overview.loading ? (
-          <Skeleton width={96} height={24} radius={999} />
-        ) : null}
-        {overview.data && (
-          <button type="button" className="badge badge--button num" onClick={() => setOdoOpen(true)} title="Update odometer">
-            <Icon name="gauge" size={14} /> {odo?.odometer_km != null ? formatKm(odo.odometer_km) : "Set odometer"}
-            <span className="badge__action">Update</span>
-          </button>
-        )}
-        {cost.data && (
-          <span className="badge badge--teal num">
-            <Icon name="coins" size={14} /> {formatMoney(cost.data.total_cost)} total
-          </span>
-        )}
+      <div className="grid-4">
+        <StatCard
+          label="Odometer"
+          icon="gauge"
+          tone="info"
+          value={odo?.odometer_km != null ? formatKm(odo.odometer_km) : overview.loading ? "..." : "Not set"}
+          action={
+            overview.data && (
+              <button type="button" className="link-button" onClick={() => setOdoOpen(true)}>
+                {odo?.odometer_km != null ? "Update reading" : "Set odometer"}
+              </button>
+            )
+          }
+        />
+        <StatCard
+          label="Total spend"
+          icon="coins"
+          tone="accent"
+          value={cost.data ? formatMoney(cost.data.total_cost) : cost.loading ? "..." : "-"}
+          hint="All services, all time"
+        />
+        <StatCard
+          label="Next due"
+          icon={urgent ? (urgent.status === "overdue" ? "alert" : "clock") : "check-circle"}
+          tone={urgent ? (urgent.status === "overdue" ? "danger" : "warn") : "ok"}
+          value={urgent ? urgent.label || treatmentLabel(urgent.part) : due.loading ? "..." : "Nothing due"}
+          hint={
+            urgent
+              ? urgent.due_date
+                ? `${urgent.status === "overdue" ? "Was due" : "Due"} ${formatDate(urgent.due_date)}`
+                : urgent.status === "overdue"
+                  ? "Overdue"
+                  : "Due soon"
+              : "Based on logged services"
+          }
+        />
+        <StatCard
+          label="Tracking coverage"
+          icon="activity"
+          value={coverage ? `${coverage.known} / ${coverage.tracked}` : overview.loading ? "..." : "-"}
+          hint="Maintenance categories with history"
+        />
       </div>
 
       {overview.error && !overview.data && (
         <ErrorState error={overview.error} title="Could not load the vehicle status" onRetry={overview.reload} />
       )}
 
-      {(overview.data?.warnings || []).length > 0 && <DataChecksPanel carId={id} warnings={overview.data.warnings} />}
+      <div className="detail-layout">
+        <aside className="detail-layout__aside stack-lg" aria-label="Vehicle status">
+          {(overview.data?.warnings || []).length > 0 && <DataChecksPanel carId={id} warnings={overview.data.warnings} />}
 
-      {due.error ? (
-        <ErrorState error={due.error} title="Could not load maintenance status" onRetry={due.reload} />
-      ) : due.loading && !due.data ? (
-        <SkeletonCard lines={4} />
-      ) : (
-        <MaintenanceStatusPanel
-          items={due.data || []}
-          carId={id}
-          status={status}
-          coverage={coverage}
-          odometer={odo}
-          onUpdateOdometer={() => setOdoOpen(true)}
-        />
-      )}
-
-      <Tabs
-        tabs={[
-          { id: "history", label: "Service history" },
-          { id: "expenses", label: "Expenses" },
-        ]}
-        value={tab}
-        onChange={setTab}
-      />
-
-      {tab === "expenses" ? (
-        <ExpensesTab carId={id} />
-      ) : (
-        <div className="stack" role="tabpanel" id="panel-history" aria-labelledby="tab-history">
-          <div className="filters">
-            <Input
-              label="Search"
-              type="search"
-              placeholder="Title, notes or parts"
-              maxLength={100}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            <Select label="Type" value={type} onChange={(e) => setType(e.target.value)}>
-              <option value="">All types</option>
-              {TREATMENTS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </Select>
-            <Select label="Year" value={year} onChange={(e) => setYear(e.target.value)}>
-              <option value="">All years</option>
-              {yearOptions(minYear, year).map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </Select>
-            <Button variant="secondary" onClick={exportCsv} loading={exporting} className="filters__export">
-              <Icon name="download" size={16} /> Export CSV
-            </Button>
-          </div>
-
-          {records.error ? (
-            <ErrorState error={records.error} title="Could not load service history" onRetry={records.reload} />
-          ) : records.loading && !records.data ? (
-            <div className="stack" role="status" aria-label="Loading service history">
-              <SkeletonCard />
-              <SkeletonCard />
-            </div>
-          ) : list.length === 0 ? (
-            filtersActive ? (
-              <EmptyState icon="search" title="No matching services" text="Try a different search or clear the filters.">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setQ("");
-                    setType("");
-                    setYear("");
-                  }}
-                >
-                  Clear filters
-                </Button>
-              </EmptyState>
-            ) : (
-              <EmptyState icon="wrench" title="No services logged yet" text="Log the first service to build this vehicle's history.">
-                <Button as={Link} to={`/car/${id}/add-record`} variant="primary">
-                  <Icon name="plus" size={16} /> Log service
-                </Button>
-              </EmptyState>
-            )
+          {due.error ? (
+            <ErrorState error={due.error} title="Could not load maintenance status" onRetry={due.reload} />
+          ) : due.loading && !due.data ? (
+            <SkeletonCard lines={4} />
           ) : (
-            <ServiceTimeline
+            <MaintenanceStatusPanel
+              items={due.data || []}
               carId={id}
-              records={list}
-              flaggedIds={flaggedIds}
-              onDelete={setToDelete}
-              onOpenReceipt={setReceipt}
+              status={status}
+              coverage={coverage}
+              odometer={odo}
+              onUpdateOdometer={() => setOdoOpen(true)}
             />
           )}
+        </aside>
+
+        <div className="detail-layout__main stack-lg">
+          <Tabs
+            tabs={[
+              { id: "history", label: "Service history", count: records.data && !filtersActive ? list.length : undefined },
+              { id: "expenses", label: "Expenses" },
+            ]}
+            value={tab}
+            onChange={setTab}
+            label="Vehicle sections"
+          />
+
+          {tab === "expenses" ? (
+            <ExpensesTab carId={id} />
+          ) : (
+            <div className="stack" role="tabpanel" id="panel-history" aria-labelledby="tab-history">
+              <div className="filters">
+                <Input
+                  label="Search services"
+                  hideLabel
+                  icon="search"
+                  type="search"
+                  placeholder="Search title, notes or parts"
+                  maxLength={100}
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                />
+                <Select label="Service type" hideLabel value={type} onChange={(e) => setType(e.target.value)}>
+                  <option value="">All types</option>
+                  {TREATMENTS.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </Select>
+                <Select label="Year" hideLabel value={year} onChange={(e) => setYear(e.target.value)}>
+                  <option value="">All years</option>
+                  {yearOptions(minYear, year).map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </Select>
+                <Button variant="secondary" onClick={exportCsv} loading={exporting} className="filters__export">
+                  <Icon name="download" size={16} /> Export CSV
+                </Button>
+              </div>
+
+              {filtersActive && records.data && (
+                <div className="filters__summary">
+                  <span className="muted small">
+                    {list.length} matching service{list.length === 1 ? "" : "s"}
+                  </span>
+                  <button type="button" className="link-button small" onClick={clearFilters}>
+                    Clear filters
+                  </button>
+                </div>
+              )}
+
+              {records.error ? (
+                <ErrorState error={records.error} title="Could not load service history" onRetry={records.reload} />
+              ) : records.loading && !records.data ? (
+                <div className="stack" role="status" aria-label="Loading service history">
+                  <SkeletonCard />
+                  <SkeletonCard />
+                </div>
+              ) : list.length === 0 ? (
+                filtersActive ? (
+                  <EmptyState icon="search" title="No matching services" text="Try a different search or clear the filters.">
+                    <Button variant="secondary" onClick={clearFilters}>
+                      Clear filters
+                    </Button>
+                  </EmptyState>
+                ) : (
+                  <EmptyState icon="wrench" title="No services logged yet" text="Log the first service to build this vehicle's history.">
+                    <Button as={Link} to={`/car/${id}/add-record`} variant="accent">
+                      <Icon name="plus" size={16} /> Log service
+                    </Button>
+                  </EmptyState>
+                )
+              ) : (
+                <ServiceTimeline
+                  carId={id}
+                  records={list}
+                  flaggedIds={flaggedIds}
+                  onDelete={setToDelete}
+                  onOpenReceipt={setReceipt}
+                />
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <OdometerModal
         open={odoOpen}

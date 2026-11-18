@@ -25,7 +25,11 @@ export default function ToastProvider({ children }) {
       <div className="toasts" role="region" aria-label="Notifications" aria-live="polite">
         {toasts.map((t) => (
           <div key={t.id} className={`toast toast--${t.kind}`} role={t.kind === "error" ? "alert" : "status"}>
-            <Icon name={t.kind === "error" ? "alert" : "check-circle"} size={18} />
+            <Icon
+              name={t.kind === "error" ? "alert" : t.kind === "info" ? "info" : "check-circle"}
+              size={18}
+              className="toast__icon"
+            />
             <span>{t.message}</span>
             <button type="button" className="toast__close" aria-label="Dismiss notification" onClick={() => dismiss(t.id)}>
               <Icon name="x" size={16} />

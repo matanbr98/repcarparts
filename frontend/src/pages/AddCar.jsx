@@ -5,7 +5,11 @@ import VehicleForm from "../components/VehicleForm";
 export default function AddCar() {
   return (
     <div className="stack-lg narrow">
-      <PageHeader back={{ to: "/", label: "Garage" }} title="Add a vehicle" />
+      <PageHeader
+        back={{ to: "/", label: "Garage" }}
+        title="Add a vehicle"
+        subtitle="Start tracking services, costs and upcoming maintenance."
+      />
       <Card>
         <VehicleForm />
       </Card>

@@ -165,7 +165,7 @@ export default function VehicleForm({ car = null }) {
         </p>
       )}
 
-      <div className="cluster">
+      <div className="form-actions form-actions--bar">
         <Button type="submit" variant="primary" size="lg" loading={saving}>
           {isEdit ? "Save changes" : "Save vehicle"}
         </Button>

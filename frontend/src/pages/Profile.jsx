@@ -3,7 +3,6 @@ import { api } from "../services/api";
 import { useAsync } from "../hooks/useAsync";
 import { useToast } from "../components/ui/toastContext";
 import PageHeader from "../components/ui/PageHeader";
-import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Icon from "../components/ui/Icon";
 import { Input } from "../components/ui/Field";
@@ -12,6 +11,8 @@ import { SkeletonCard } from "../components/ui/Skeleton";
 import Avatar from "../components/Avatar";
 import ChangePasswordForm from "../components/ChangePasswordForm";
 import { validateImage } from "../lib/images";
+import { notifyProfileUpdated } from "../lib/profileEvents";
+import { useAuth } from "../hooks/useAuth";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -43,6 +44,7 @@ function ProfileForm({ me, onSaved }) {
       if (form.email !== (me.email || "")) patch.email = form.email.trim() || null;
       const updated = await api.updateMe(patch);
       onSaved(updated);
+      notifyProfileUpdated();
       toast.success("Profile saved");
     } catch (err) {
       setErrors({ ...(err.fields || {}), form: err.message });
@@ -63,7 +65,7 @@ function ProfileForm({ me, onSaved }) {
           <Icon name="alert" size={16} /> {errors.form}
         </p>
       )}
-      <div>
+      <div className="form-actions">
         <Button type="submit" variant="primary" loading={saving} disabled={!dirty}>
           Save details
         </Button>
@@ -101,6 +103,7 @@ function PictureUploader({ me, onUpdated }) {
     try {
       const updated = await api.uploadProfilePicture(file);
       onUpdated(updated);
+      notifyProfileUpdated();
       setFile(null);
       setPreview("");
       toast.success("Profile picture updated");
@@ -156,12 +159,39 @@ function PictureUploader({ me, onUpdated }) {
   );
 }
 
+function SettingsSection({ title, description, children }) {
+  return (
+    <section className="settings-section">
+      <div className="settings-section__intro">
+        <h2>{title}</h2>
+        {description && <p className="muted small">{description}</p>}
+      </div>
+      <div className="card settings-section__card">{children}</div>
+    </section>
+  );
+}
+
 export default function Profile() {
   const { data, error, loading, reload, setData } = useAsync(() => api.me(), []);
+  const { isManager } = useAuth();
 
   return (
-    <div className="stack-lg narrow">
-      <PageHeader title="Profile" subtitle={data ? `Signed in as ${data.username}` : undefined} />
+    <div className="stack-lg profile-page">
+      <PageHeader
+        title="Profile"
+        subtitle="Your account details, picture and password."
+        leading={data && <Avatar url={data.profile_image_url} name={data.username} size={48} />}
+        meta={
+          data && (
+            <>
+              <span className="muted small">
+                Signed in as <strong className="strong">{data.username}</strong>
+              </span>
+              <span className={`badge ${isManager ? "badge--accent" : ""}`}>{isManager ? "Manager" : "Owner"}</span>
+            </>
+          )
+        }
+      />
       {error && !data ? (
         <ErrorState error={error} title="Could not load your profile" onRetry={reload} />
       ) : loading && !data ? (
@@ -170,20 +200,20 @@ export default function Profile() {
           <SkeletonCard lines={4} />
         </>
       ) : (
-        <>
-          <Card>
-            <h2 className="card__title">Profile picture</h2>
+        <div className="settings">
+          <SettingsSection title="Profile picture" description="Shown in the sidebar and to your manager.">
             <PictureUploader me={data} onUpdated={(u) => setData((p) => ({ ...p, ...u }))} />
-          </Card>
-          <Card>
-            <h2 className="card__title">Details</h2>
+          </SettingsSection>
+          <SettingsSection title="Contact details" description="How your manager can reach you about your vehicles.">
             <ProfileForm me={data} onSaved={(u) => setData((p) => ({ ...p, ...u }))} />
-          </Card>
-          <Card>
-            <h2 className="card__title">Change password</h2>
+          </SettingsSection>
+          <SettingsSection
+            title="Password"
+            description="Use at least 8 characters. Older sessions are signed out when it changes."
+          >
             <ChangePasswordForm />
-          </Card>
-        </>
+          </SettingsSection>
+        </div>
       )}
     </div>
   );

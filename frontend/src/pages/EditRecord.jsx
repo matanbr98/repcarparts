@@ -6,10 +6,13 @@ import Card from "../components/ui/Card";
 import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import ServiceForm from "../components/ServiceForm";
+import { vehicleTitle } from "../lib/format";
 
 export default function EditRecord() {
   const { id, recordId } = useParams();
   const location = useLocation();
+  const car = useAsync(() => api.getCar(id), [id]);
+  const name = car.data ? vehicleTitle(car.data) : "";
   const fromState = location.state?.rec && String(location.state.rec.id) === String(recordId) ? location.state.rec : null;
 
   const { data, error, loading, reload } = useAsync(async () => {
@@ -26,7 +29,11 @@ export default function EditRecord() {
 
   return (
     <div className="stack-lg narrow">
-      <PageHeader back={{ to: `/car/${id}`, label: "Vehicle" }} title="Edit service" />
+      <PageHeader
+        back={{ to: `/car/${id}`, label: name || "Vehicle" }}
+        title="Edit service"
+        subtitle={name ? `Update a service on ${name}.` : undefined}
+      />
       {error ? (
         <ErrorState error={error} onRetry={error.status === 404 ? undefined : reload} />
       ) : loading || !data ? (

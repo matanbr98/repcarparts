@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-/** Controlled tabs. tabs: [{ id, label }]. Arrow keys move between tabs. */
+/** Controlled tabs. tabs: [{ id, label, count? }]. Arrow keys move between tabs. */
 export default function Tabs({ tabs, value, onChange, label = "Sections" }) {
   const refs = useRef({});
 
@@ -8,6 +8,8 @@ export default function Tabs({ tabs, value, onChange, label = "Sections" }) {
     let next = null;
     if (e.key === "ArrowRight") next = (index + 1) % tabs.length;
     if (e.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+    if (e.key === "Home") next = 0;
+    if (e.key === "End") next = tabs.length - 1;
     if (next !== null) {
       e.preventDefault();
       const t = tabs[next];
@@ -35,6 +37,7 @@ export default function Tabs({ tabs, value, onChange, label = "Sections" }) {
           onKeyDown={(e) => onKeyDown(e, i)}
         >
           {t.label}
+          {t.count !== undefined && t.count !== null && <span className="tabs__count num">{t.count}</span>}
         </button>
       ))}
     </div>

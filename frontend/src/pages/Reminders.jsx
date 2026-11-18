@@ -6,18 +6,19 @@ import PageHeader from "../components/ui/PageHeader";
 import Button from "../components/ui/Button";
 import Icon from "../components/ui/Icon";
 import Badge from "../components/ui/Badge";
+import Segmented from "../components/ui/Segmented";
 import Modal, { ConfirmDialog } from "../components/ui/Modal";
 import { Input, Select, Textarea } from "../components/ui/Field";
 import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import ReceiptLightbox from "../components/ReceiptLightbox";
-import { formatDate, todayISO, vehicleTitle } from "../lib/format";
+import { formatDate, relativeDay, todayISO, vehicleTitle } from "../lib/format";
 
 function ReminderItem({ r, overdue, onToggle, onDelete, onImage, busy }) {
   const isSelf = r.source === "self";
   return (
-    <li className={`reminder${r.done ? " reminder--done" : ""}`}>
+    <li className={`reminder${r.done ? " reminder--done" : ""}${overdue ? " reminder--overdue" : ""}`}>
       <button
         type="button"
         className="reminder__check"
@@ -27,42 +28,55 @@ function ReminderItem({ r, overdue, onToggle, onDelete, onImage, busy }) {
         onClick={() => onToggle(r)}
         disabled={busy}
       >
-        {r.done && <Icon name="check" size={16} strokeWidth={3} />}
+        {r.done && <Icon name="check" size={14} strokeWidth={3} />}
       </button>
       <div className="reminder__body">
-        <div className="cluster">
+        <div className="reminder__head">
           <strong className="reminder__title">{r.title}</strong>
           {overdue && (
             <span className="badge badge--overdue">
-              <Icon name="alert" size={14} /> Overdue
+              <Icon name="alert" size={12} /> Overdue
             </span>
           )}
-          <Badge tone={isSelf ? undefined : "teal"}>{isSelf ? "My reminder" : "From manager"}</Badge>
+          <Badge tone={isSelf ? undefined : "info"}>{isSelf ? "My reminder" : "From manager"}</Badge>
         </div>
         {r.message && <p className="reminder__msg">{r.message}</p>}
-        <p className="muted small">
-          {r.due_date && (
-            <>
-              <Icon name="calendar" size={14} className="inline-icon" /> Due {formatDate(r.due_date)}
-            </>
-          )}
-          {r.car_label && (
-            <>
-              {r.due_date ? "  -  " : ""}
-              <Icon name="car" size={14} className="inline-icon" /> {r.car_label}
-            </>
-          )}
-          {r.done && r.done_at && <>{"  -  "}Done {formatDate(r.done_at)}</>}
-        </p>
+        {(r.due_date || r.car_label || (r.done && r.done_at)) && (
+          <ul className="reminder__meta">
+            {r.due_date && (
+              <li>
+                <Icon name="calendar" size={13} /> Due {formatDate(r.due_date)}
+                {!r.done && <span className="subtle"> · {relativeDay(r.due_date)}</span>}
+              </li>
+            )}
+            {r.car_label && (
+              <li>
+                <Icon name="car" size={13} /> {r.car_label}
+              </li>
+            )}
+            {r.done && r.done_at && (
+              <li>
+                <Icon name="check-circle" size={13} /> Done {formatDate(r.done_at)}
+              </li>
+            )}
+          </ul>
+        )}
         {r.image_url && (
-          <button type="button" className="receipt-thumb" onClick={() => onImage(r)} aria-label={`View image for ${r.title}`}>
+          <button type="button" className="receipt-thumb receipt-thumb--sm" onClick={() => onImage(r)} aria-label={`View image for ${r.title}`}>
             <img src={assetUrl(r.image_url)} alt="" loading="lazy" />
           </button>
         )}
       </div>
       {isSelf && (
-        <Button size="sm" variant="danger-ghost" onClick={() => onDelete(r)} aria-label={`Delete ${r.title}`}>
-          <Icon name="trash" size={14} />
+        <Button
+          size="sm"
+          variant="ghost"
+          className="btn--icon reminder__delete"
+          onClick={() => onDelete(r)}
+          aria-label={`Delete ${r.title}`}
+          data-tooltip="Delete"
+        >
+          <Icon name="trash" size={15} />
         </Button>
       )}
     </li>
@@ -72,9 +86,9 @@ function ReminderItem({ r, overdue, onToggle, onDelete, onImage, busy }) {
 function Group({ title, items, overdue, ...handlers }) {
   if (items.length === 0) return null;
   return (
-    <section className="stack" aria-label={title}>
-      <h2>
-        {title} <span className="muted small">({items.length})</span>
+    <section className="stack-sm" aria-label={title}>
+      <h2 className="section-head__title">
+        {title} <span className="section-head__count num">{items.length}</span>
       </h2>
       <ul className="reminder-list card card--flush">
         {items.map((r) => (
@@ -210,6 +224,8 @@ export default function Reminders() {
   }
 
   const total = (data || []).length;
+  const [view, setView] = useState("open");
+  const show = (g) => view === "all" || (view === "open" ? g !== "done" : view === g);
   const handlers = { onToggle: toggle, onDelete: setToDelete, onImage: setImage, busy: false };
 
   return (
@@ -218,7 +234,7 @@ export default function Reminders() {
         title="Reminders"
         subtitle="Service nudges from your manager and notes to yourself."
         actions={
-          <Button variant="primary" onClick={() => setCreating(true)}>
+          <Button variant="accent" onClick={() => setCreating(true)}>
             <Icon name="plus" size={16} /> New reminder
           </Button>
         }
@@ -239,9 +255,29 @@ export default function Reminders() {
         </EmptyState>
       ) : (
         <>
-          <Group title="Overdue" items={groups.overdue} overdue {...handlers} busy={busyId !== null} />
-          <Group title="Upcoming" items={groups.upcoming} {...handlers} busy={busyId !== null} />
-          <Group title="Done" items={groups.done} {...handlers} busy={busyId !== null} />
+          <Segmented
+            label="Show reminders"
+            value={view}
+            onChange={setView}
+            options={[
+              { value: "open", label: "Open", count: groups.overdue.length + groups.upcoming.length },
+              { value: "overdue", label: "Overdue", count: groups.overdue.length },
+              { value: "done", label: "Done", count: groups.done.length },
+              { value: "all", label: "All", count: total },
+            ]}
+          />
+          {show("overdue") && <Group title="Overdue" items={groups.overdue} overdue {...handlers} busy={busyId !== null} />}
+          {show("upcoming") && <Group title="Upcoming" items={groups.upcoming} {...handlers} busy={busyId !== null} />}
+          {show("done") && <Group title="Done" items={groups.done} {...handlers} busy={busyId !== null} />}
+          {((view === "open" && groups.overdue.length + groups.upcoming.length === 0) ||
+            (view === "overdue" && groups.overdue.length === 0) ||
+            (view === "done" && groups.done.length === 0)) && (
+            <EmptyState
+              icon={view === "done" ? "inbox" : "check-circle"}
+              title={view === "done" ? "Nothing completed yet" : "You're all caught up"}
+              text={view === "done" ? "Reminders you tick off appear here." : "No open reminders in this view."}
+            />
+          )}
         </>
       )}
 

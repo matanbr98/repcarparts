@@ -6,7 +6,7 @@ export default function ErrorState({ error, title = "Something went wrong", onRe
   return (
     <div className="state state--error" role="alert">
       <div className="state__icon">
-        <Icon name="alert" size={28} />
+        <Icon name="alert" size={22} />
       </div>
       <div className="state__title">{title}</div>
       <p className="state__text">{message}</p>
