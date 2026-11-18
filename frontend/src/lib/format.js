@@ -82,3 +82,21 @@ export function exportBaseName(car, id) {
   const cleaned = raw.replace(/[^\p{L}\p{N}._-]+/gu, "_").replace(/^_+|_+$/g, "");
   return /[\p{L}\p{N}]/u.test(cleaned) ? cleaned : `vehicle-${id}`;
 }
+
+/** Whole days from today to an ISO date (negative = in the past). null when the date is missing. */
+export function daysFromToday(value, today = todayISO()) {
+  const d = parseDate(value);
+  const t = parseDate(today);
+  if (!d || !t) return null;
+  return Math.round((d - t) / 86400000);
+}
+
+/** "Today", "Tomorrow", "In 5 days", "Yesterday", "3 days ago". */
+export function relativeDay(value, today = todayISO()) {
+  const n = daysFromToday(value, today);
+  if (n === null) return "";
+  if (n === 0) return "Today";
+  if (n === 1) return "Tomorrow";
+  if (n === -1) return "Yesterday";
+  return n > 0 ? `In ${n} days` : `${Math.abs(n)} days ago`;
+}

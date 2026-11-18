@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import Button from "./Button";
+import Icon from "./Icon";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
 
@@ -27,7 +28,7 @@ export default function Modal({ open, onClose, title, children, actions, wide = 
         e.stopPropagation();
         onCloseRef.current?.();
       } else if (e.key === "Tab" && node) {
-        const items = Array.from(node.querySelectorAll(FOCUSABLE));
+        const items = Array.from(node.querySelectorAll(FOCUSABLE)).filter((el) => el.getAttribute("tabindex") !== "-1");
         if (items.length === 0) {
           e.preventDefault();
           return;
@@ -70,9 +71,16 @@ export default function Modal({ open, onClose, title, children, actions, wide = 
         tabIndex={-1}
       >
         {title && (
-          <h2 className="modal__title" id={titleId}>
-            {title}
-          </h2>
+          <div className="modal__head">
+            <h2 className="modal__title" id={titleId}>
+              {title}
+            </h2>
+            {onClose && (
+              <button type="button" className="modal__close" onClick={onClose} aria-label="Close dialog" tabIndex={-1}>
+                <Icon name="x" size={18} />
+              </button>
+            )}
+          </div>
         )}
         {children}
         {actions && <div className="modal__actions">{actions}</div>}

@@ -91,7 +91,7 @@ export default function ChangePasswordForm({ submitLabel = "Update password", on
           <Icon name="alert" size={16} /> {formError}
         </p>
       )}
-      <div>
+      <div className="form-actions">
         <Button type="submit" variant="primary" loading={saving}>
           {submitLabel}
         </Button>

@@ -1,56 +1,150 @@
-/* Design tokens: light theme only. */
+/*
+ * Design tokens (light theme).
+ * Brand: graphite neutrals + the logo's orange (primary action / active state) and steel blue
+ * (links, informational accents). Every colour used by components should come from here.
+ */
 :root {
-  /* brand */
-  --navy-900: #0b1f3a;
-  --navy-700: #1e3a5f;
-  --navy-600: #2a4a75;
-  --teal-500: #14b8a6;
-  --teal-600: #0d9488;
-  --teal-700: #0f766e;
-  --teal-100: #ccfbf1;
-  --teal-50: #effdfa;
+  /* ---- neutrals (graphite) ---- */
+  --gray-0: #ffffff;
+  --gray-25: #fbfbfc;
+  --gray-50: #f6f7f9;
+  --gray-100: #eef0f3;
+  --gray-150: #e5e8ec;
+  --gray-200: #dcdfe5;
+  --gray-300: #c4c9d1;
+  --gray-400: #9aa1ac;
+  --gray-500: #6b7280;
+  --gray-600: #4b5260;
+  --gray-700: #343a46;
+  --gray-800: #22262e;
+  --gray-900: #15181d;
 
-  /* surfaces */
-  --bg: #f6f8fb;
-  --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
+  /* ---- brand ---- */
+  --orange-50: #fff5ed;
+  --orange-100: #ffe6d3;
+  --orange-200: #fdc9a4;
+  --orange-400: #f7873f;
+  --orange-500: #ef6c1a;   /* fills, indicators (non-text) */
+  --orange-600: #d4570c;   /* hover */
+  --orange-700: #b4460a;   /* text on light, button bg w/ white text (AA) */
 
-  /* text */
-  --text: #0f172a;
-  --muted: #64748b;
-  --on-navy: #e6edf7;
-  --on-navy-muted: #9db0c8;
+  --steel-50: #eff5fb;
+  --steel-100: #dce8f4;
+  --steel-200: #b9d1ea;
+  --steel-500: #3a6c9c;
+  --steel-600: #2c5986;
+  --steel-700: #234870;
 
-  /* status */
-  --ok: #15803d;
-  --ok-bg: #dcfce7;
-  --warn: #b45309;
-  --warn-bg: #fef3c7;
-  --danger: #b91c1c;
-  --danger-bg: #fee2e2;
-  --unknown: #475569;
-  --unknown-bg: #e2e8f0;
+  /* ---- semantic surfaces ---- */
+  --bg: var(--gray-50);
+  --surface: var(--gray-0);
+  --surface-2: var(--gray-50);
+  --surface-3: var(--gray-100);
+  --surface-sunken: var(--gray-100);
+  --sidebar-bg: var(--gray-25);
+  --border: var(--gray-150);
+  --border-subtle: var(--gray-100);
+  --border-strong: var(--gray-200);
+  --border-input: var(--gray-300);
 
-  /* shape + rhythm (8px grid) */
-  --radius: 12px;
-  --radius-sm: 8px;
-  --s1: 8px;
-  --s2: 16px;
-  --s3: 24px;
-  --s4: 32px;
-  --s5: 48px;
+  /* ---- semantic text ---- */
+  --text: var(--gray-900);
+  --text-2: var(--gray-700);
+  --muted: var(--gray-500);
+  --subtle: var(--gray-400);
+  --on-dark: #eef1f5;
+  --on-dark-muted: #a3abb8;
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.18);
+  /* ---- semantic accents ---- */
+  --accent: var(--orange-500);
+  --accent-strong: var(--orange-700);
+  --accent-hover: var(--orange-600);
+  --accent-soft: var(--orange-50);
+  --accent-soft-2: var(--orange-100);
+  --link: var(--steel-600);
+  --info: var(--steel-600);
+  --info-bg: var(--steel-50);
 
-  --focus-ring: 0 0 0 3px rgba(20, 184, 166, 0.45);
-  --transition: 150ms ease;
+  /* ---- status ---- */
+  --ok: #157a42;
+  --ok-fill: #22a05a;
+  --ok-bg: #e9f7ef;
+  --ok-border: #bfe6cf;
+  --warn: #9a5a00;
+  --warn-fill: #e09a12;
+  --warn-bg: #fdf5e3;
+  --warn-border: #f3dca6;
+  --danger: #c0262d;
+  --danger-fill: #e0434a;
+  --danger-hover: #a51f25;
+  --danger-bg: #fdeced;
+  --danger-border: #f6c8cb;
+  --unknown: var(--gray-600);
+  --unknown-fill: var(--gray-300);
+  --unknown-bg: var(--gray-100);
+  --unknown-border: var(--gray-200);
 
-  --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* ---- typography ---- */
+  --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 28px;
 
-  --sidebar-w: 248px;
+  /* ---- spacing (4px base) ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  /* legacy aliases (8px grid) */
+  --s1: var(--sp-2);
+  --s2: var(--sp-4);
+  --s3: var(--sp-6);
+  --s4: var(--sp-8);
+  --s5: var(--sp-12);
+
+  /* ---- shape ---- */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+
+  /* ---- elevation ---- */
+  --shadow-xs: 0 1px 2px rgba(21, 24, 29, 0.05);
+  --shadow-sm: 0 1px 2px rgba(21, 24, 29, 0.04), 0 1px 3px rgba(21, 24, 29, 0.06);
+  --shadow-md: 0 2px 4px rgba(21, 24, 29, 0.04), 0 6px 16px rgba(21, 24, 29, 0.08);
+  --shadow-lg: 0 8px 20px rgba(21, 24, 29, 0.08), 0 24px 56px rgba(21, 24, 29, 0.16);
+  --shadow-inset: inset 0 1px 2px rgba(21, 24, 29, 0.06);
+
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px rgba(239, 108, 26, 0.55);
+  --focus-ring-input: 0 0 0 3px rgba(239, 108, 26, 0.18);
+
+  /* ---- motion ---- */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --transition: 140ms var(--ease);
+
+  /* ---- layout ---- */
+  --sidebar-w: 256px;
+  --topbar-h: 56px;
   --tabbar-h: 64px;
+  --content-w: 1200px;
+  --content-narrow: 720px;
+
+  --z-sidebar: 20;
+  --z-tabbar: 30;
+  --z-menu: 60;
+  --z-modal: 100;
+  --z-toast: 200;
+  --z-skip: 300;
 }

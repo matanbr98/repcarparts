@@ -48,13 +48,13 @@ export default function ServiceTimeline({ carId, records, flaggedIds, onDelete, 
         const yearTotal = items.reduce((sum, r) => sum + Number(r.cost || 0), 0);
         return (
           <section key={year} className="timeline__year" aria-label={`Services in ${year}`}>
-            <h3 className="timeline__year-label">
-              {year}{" "}
-              <span className="muted small">
-                ({items.length}
-                {yearTotal > 0 ? ` - ${formatMoney(yearTotal)}` : ""})
+            <div className="timeline__year-head">
+              <h3 className="timeline__year-label">{year}</h3>
+              <span className="timeline__year-meta num">
+                {items.length} service{items.length === 1 ? "" : "s"}
+                {yearTotal > 0 ? ` · ${formatMoney(yearTotal)}` : ""}
               </span>
-            </h3>
+            </div>
             <ol className="timeline__list">
               {items.map((rec) => {
                 const info = treatmentInfo(rec.treatment_type);
@@ -67,9 +67,33 @@ export default function ServiceTimeline({ carId, records, flaggedIds, onDelete, 
                     <div className="card timeline__card">
                       <div className="timeline__body">
                         <div className="timeline__content">
-                          <div className="spread">
+                          <div className="timeline__head">
                             <h4 className="timeline__title">{rec.title}</h4>
                             <span className="num timeline__cost">{formatMoney(rec.cost ?? 0)}</span>
+                            <div className="timeline__actions">
+                              <Button
+                                as={Link}
+                                to={`/car/${carId}/edit-record/${rec.id}`}
+                                state={{ rec }}
+                                size="sm"
+                                variant="ghost"
+                                className="btn--icon"
+                                aria-label={`Edit ${rec.title}`}
+                                data-tooltip="Edit"
+                              >
+                                <Icon name="edit" size={15} />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="danger-ghost"
+                                className="btn--icon"
+                                onClick={() => onDelete(rec)}
+                                aria-label={`Delete ${rec.title}`}
+                                data-tooltip="Delete"
+                              >
+                                <Icon name="trash" size={15} />
+                              </Button>
+                            </div>
                           </div>
                           <p className="muted small timeline__meta">
                             <span>
@@ -116,26 +140,6 @@ export default function ServiceTimeline({ carId, records, flaggedIds, onDelete, 
                             </span>
                           </button>
                         )}
-                      </div>
-                      <div className="cluster timeline__foot">
-                        <Button
-                          as={Link}
-                          to={`/car/${carId}/edit-record/${rec.id}`}
-                          state={{ rec }}
-                          size="sm"
-                          variant="ghost"
-                          aria-label={`Edit ${rec.title}`}
-                        >
-                          <Icon name="edit" size={14} /> Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger-ghost"
-                          onClick={() => onDelete(rec)}
-                          aria-label={`Delete ${rec.title}`}
-                        >
-                          <Icon name="trash" size={14} /> Delete
-                        </Button>
                       </div>
                     </div>
                   </li>

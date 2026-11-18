@@ -1,4 +1,4 @@
-import { formatMoney, monthLabel } from "../lib/format";
+import { formatMoney, formatNumber, monthLabel } from "../lib/format";
 
 const W = 600;
 const H = 200;
@@ -18,18 +18,21 @@ export default function SpendChart({ data = [] }) {
     <figure className="spend-chart">
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Monthly spend: ${summary}`} preserveAspectRatio="xMidYMid meet">
         <line x1={PAD.left} x2={W - PAD.right} y1={H - PAD.bottom} y2={H - PAD.bottom} stroke="var(--border-strong)" />
+        {[0.5, 1].map((f) => (
+          <line key={f} x1={PAD.left} x2={W - PAD.right} y1={H - PAD.bottom - innerH * f} y2={H - PAD.bottom - innerH * f} stroke="var(--border-subtle)" strokeDasharray="3 4" />
+        ))}
         {data.map((d, i) => {
           const h = Math.round(((d.total || 0) / max) * innerH);
           const x = PAD.left + i * slot + (slot - barW) / 2;
           const y = H - PAD.bottom - h;
           return (
             <g key={d.month}>
-              <rect x={x} y={y} width={barW} height={Math.max(h, d.total ? 2 : 0)} rx="4" fill="var(--teal-500)">
+              <rect x={x} y={y} width={barW} height={Math.max(h, d.total ? 2 : 0)} rx="4" fill="var(--accent)">
                 <title>{`${d.month}: ${formatMoney(d.total)}`}</title>
               </rect>
               {d.total > 0 && data.length <= 12 && (
-                <text x={x + barW / 2} y={y - 4} textAnchor="middle" fontSize="11" fill="var(--navy-700)">
-                  {d.total}
+                <text x={x + barW / 2} y={y - 4} textAnchor="middle" fontSize="11" fill="var(--text-2)" fontWeight="600">
+                  {formatNumber(d.total)}
                 </text>
               )}
               <text x={x + barW / 2} y={H - 10} textAnchor="middle" fontSize="11" fill="var(--muted)">

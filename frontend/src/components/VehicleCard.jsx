@@ -3,28 +3,15 @@ import Icon from "./ui/Icon";
 import StatusPill from "./ui/StatusPill";
 import Button from "./ui/Button";
 import { formatDate, formatKm, formatMoney, vehicleSubtitle, vehicleTitle } from "../lib/format";
-import { statusMeta, treatmentLabel } from "../lib/treatments";
-
-function urgencyLabel(car) {
-  const status = car.status || "unknown";
-  const item = car.most_urgent;
-  const cov = car.coverage;
-  if (status === "ok") return "Healthy";
-  if (status === "unknown") {
-    if (!cov || cov.known === 0) return "No service history yet";
-    return `Not enough data (${cov.known} of ${cov.tracked} tracked)`;
-  }
-  if (!item) return statusMeta(status).label;
-  const name = item.label || treatmentLabel(item.item || item.part);
-  return `${name} ${statusMeta(item.status || status).label.toLowerCase()}`;
-}
+import { urgencyLabel } from "../lib/vehicles";
 
 export default function VehicleCard({ car }) {
+  const status = car.status || "unknown";
   return (
-    <article className="card card--interactive vehicle-card" aria-label={vehicleTitle(car)}>
+    <article className={`card card--interactive vehicle-card vehicle-card--${status}`} aria-label={vehicleTitle(car)}>
       <div className="vehicle-card__head">
-        <div className="vehicle-card__avatar" aria-hidden="true">
-          <Icon name="car" size={24} />
+        <div className={`icon-tile icon-tile--${status === "unknown" ? "info" : status}`} aria-hidden="true">
+          <Icon name="car" size={20} />
         </div>
         <div className="vehicle-card__titles">
           <h2>
@@ -32,12 +19,12 @@ export default function VehicleCard({ car }) {
               {vehicleTitle(car)}
             </Link>
           </h2>
-          <p className="muted small">{vehicleSubtitle(car) || "No details yet"}</p>
+          <p className="muted small truncate">{vehicleSubtitle(car) || "No details yet"}</p>
         </div>
         {car.license_plate && <span className="plate">{car.license_plate}</span>}
       </div>
 
-      <StatusPill status={car.status || "unknown"} label={urgencyLabel(car)} />
+      <StatusPill status={status} label={urgencyLabel(car)} />
 
       <dl className="vehicle-card__stats">
         <div>
@@ -54,12 +41,12 @@ export default function VehicleCard({ car }) {
         </div>
       </dl>
 
-      <div className="cluster vehicle-card__actions">
-        <Button as={Link} to={`/car/${car.id}/add-record`} variant="primary">
-          <Icon name="plus" size={16} /> Log service
+      <div className="vehicle-card__actions">
+        <Button as={Link} to={`/car/${car.id}/add-record`} variant="secondary" size="sm">
+          <Icon name="plus" size={14} /> Log service
         </Button>
-        <Button as={Link} to={`/car/${car.id}`} variant="ghost">
-          View
+        <Button as={Link} to={`/car/${car.id}`} variant="ghost" size="sm" aria-label={`View ${vehicleTitle(car)}`}>
+          View details <Icon name="arrow-right" size={14} />
         </Button>
       </div>
     </article>

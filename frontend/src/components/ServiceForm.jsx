@@ -344,7 +344,7 @@ export default function ServiceForm({ carId, record = null }) {
         </p>
       )}
 
-      <div className="cluster">
+      <div className="form-actions form-actions--bar">
         <Button type="submit" variant="primary" size="lg" loading={saving}>
           {isEdit ? "Save changes" : "Save service"}
         </Button>

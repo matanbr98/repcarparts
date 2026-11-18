@@ -54,10 +54,13 @@ export default function MaintenanceStatusPanel({
 
   return (
     <section className="card maint" aria-labelledby="maint-title">
-      <div className="spread">
-        <h2 id="maint-title" className="card__title">
-          Maintenance
-        </h2>
+      <div className="card__header">
+        <div>
+          <h2 id="maint-title" className="card__title">
+            Maintenance
+          </h2>
+          <p className="card__subtitle">What is due next, by category</p>
+        </div>
         {carId && (
           <Button as={Link} to={`/car/${carId}/add-record`} size="sm" variant="ghost">
             <Icon name="plus" size={14} /> Log service
@@ -77,7 +80,7 @@ export default function MaintenanceStatusPanel({
             </div>
             <div className="maint-next__main">
               <p className="maint-next__eyebrow">{next.status === "overdue" ? "Needs attention" : "Next up"}</p>
-              <div className="spread">
+              <div className="maint-next__row">
                 <h3 className="maint-next__title">{next.label || treatmentLabel(next.part)}</h3>
                 <StatusPill status={next.status} />
               </div>
@@ -103,8 +106,10 @@ export default function MaintenanceStatusPanel({
                   <span className="maint-compact__icon" aria-hidden="true">
                     <Icon name={treatmentInfo(item.part).icon} size={16} />
                   </span>
-                  <span className="maint-compact__label">{item.label || treatmentLabel(item.part)}</span>
-                  <span className="maint-compact__when muted small num">{dueText(item) || whenText(item)}</span>
+                  <span className="maint-compact__text">
+                    <span className="maint-compact__label">{item.label || treatmentLabel(item.part)}</span>
+                    <span className="maint-compact__when num">{dueText(item) || whenText(item) || "On schedule"}</span>
+                  </span>
                   <StatusPill status={item.status} />
                 </li>
               ))}
