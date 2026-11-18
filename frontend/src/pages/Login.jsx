@@ -7,6 +7,7 @@ import AuthLayout from "../components/layout/AuthLayout";
 import Button from "../components/ui/Button";
 import Icon from "../components/ui/Icon";
 import { Input } from "../components/ui/Field";
+import { t } from "../i18n";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -26,7 +27,7 @@ export default function Login() {
     e.preventDefault();
     setError("");
     if (!username.trim() || !password) {
-      setError("Enter your username and password.");
+      setError(t("Enter your username and password."));
       return;
     }
     setBusy(true);
@@ -39,31 +40,31 @@ export default function Login() {
       else if (from && from !== "/login") navigate(from, { replace: true });
       else navigate(res.role === "manager" ? "/manager" : "/", { replace: true });
     } catch (err) {
-      setError(err.status === 401 ? "Incorrect username or password." : err.message || "Login failed.");
+      setError(err.status === 401 ? t("Incorrect username or password.") : err.message || t("Login failed."));
       setBusy(false);
     }
   }
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Log in to see your garage."
+      title={t("Welcome back")}
+      subtitle={t("Log in to see your garage.")}
       footer={
         <>
-          New here? <Link to="/register">Create an account</Link>
+          {t("New here?")} <Link to="/register">{t("Create an account")}</Link>
         </>
       }
     >
       <form className="stack" onSubmit={onSubmit} noValidate>
         <Input
-          label="Username"
+          label={t("Username")}
           autoComplete="username"
           autoCapitalize="none"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
         <Input
-          label="Password"
+          label={t("Password")}
           type={showPassword ? "text" : "password"}
           autoComplete="current-password"
           value={password}
@@ -71,7 +72,7 @@ export default function Login() {
         />
         <label className="check">
           <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} />
-          <span>Show password</span>
+          <span>{t("Show password")}</span>
         </label>
         {error && (
           <p className="form-error" role="alert">
@@ -79,7 +80,7 @@ export default function Login() {
           </p>
         )}
         <Button type="submit" variant="primary" size="lg" block loading={busy}>
-          Log in
+          {t("Log in")}
         </Button>
       </form>
     </AuthLayout>

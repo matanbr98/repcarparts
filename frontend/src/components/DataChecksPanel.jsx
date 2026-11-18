@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import Icon from "./ui/Icon";
+import { t } from "../i18n";
+import { warningMessage } from "../lib/warnings";
 
 /**
  * Non-blocking data-quality hints about a vehicle's history (odometer going backwards, same-day
@@ -11,20 +13,20 @@ export default function DataChecksPanel({ carId, warnings = [] }) {
   return (
     <section className="card data-checks" aria-labelledby="data-checks-title">
       <h2 id="data-checks-title" className="card__title">
-        <Icon name="alert" size={16} /> Worth a second look
+        <Icon name="alert" size={16} /> {t("Worth a second look")}
       </h2>
       <p className="muted small">
-        These entries look unusual. They are still saved and counted, so ignore this if the data is correct.
+        {t("These entries look unusual. They are still saved and counted, so ignore this if the data is correct.")}
       </p>
       <ul className="data-checks__list">
         {warnings.map((w, i) => {
           const target = (w.record_ids || [])[0];
           return (
             <li key={`${w.code}-${i}`} className="data-checks__item">
-              <span>{w.message}</span>
+              <span>{warningMessage(w)}</span>
               {target != null && (
                 <Link to={`/car/${carId}/edit-record/${target}`} className="data-checks__link">
-                  Review entry
+                  {t("Review entry")}
                 </Link>
               )}
             </li>

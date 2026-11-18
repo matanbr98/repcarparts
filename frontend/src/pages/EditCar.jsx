@@ -7,6 +7,7 @@ import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import VehicleForm from "../components/VehicleForm";
 import { vehicleTitle } from "../lib/format";
+import { t } from "../i18n";
 
 export default function EditCar() {
   const { id } = useParams();
@@ -15,9 +16,9 @@ export default function EditCar() {
   return (
     <div className="stack-lg narrow">
       <PageHeader
-        back={{ to: `/car/${id}`, label: data ? vehicleTitle(data) : "Vehicle" }}
-        title="Edit vehicle"
-        subtitle="Name, make, model, year and plate."
+        back={{ to: `/car/${id}`, label: data ? vehicleTitle(data) : t("Vehicle") }}
+        title={t("Edit vehicle")}
+        subtitle={t("Name, make, model, year and plate.")}
       />
       {error ? (
         <ErrorState error={error} onRetry={error.status === 404 ? undefined : reload} />

@@ -4,6 +4,7 @@ import AuthLayout from "../components/layout/AuthLayout";
 import ChangePasswordForm from "../components/ChangePasswordForm";
 import { clearAuth, getAuth } from "../auth";
 import { useAuth } from "../hooks/useAuth";
+import { t } from "../i18n";
 
 /** Forced password-change screen (shown when the account has must_change_password set). */
 export default function ChangePassword() {
@@ -12,24 +13,24 @@ export default function ChangePassword() {
   const wasForced = useRef(mustChangePassword).current;
   return (
     <AuthLayout
-      title="Choose a new password"
+      title={t("Choose a new password")}
       subtitle={
         mustChangePassword
-          ? "For your security you need to set a new password before continuing."
-          : "Update the password for your account."
+          ? t("For your security you need to set a new password before continuing.")
+          : t("Update the password for your account.")
       }
       footer={
         mustChangePassword ? (
           <button type="button" className="link-button" onClick={() => clearAuth()}>
-            Log out
+            {t("Log out")}
           </button>
         ) : (
-          <Link to="/">Back to garage</Link>
+          <Link to="/">{t("Back to garage")}</Link>
         )
       }
     >
       <ChangePasswordForm
-        submitLabel="Set new password"
+        submitLabel={t("Set new password")}
         onDone={() => {
           if (wasForced) navigate(getAuth().role === "manager" ? "/manager" : "/", { replace: true });
         }}

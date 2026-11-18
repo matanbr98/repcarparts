@@ -3,7 +3,8 @@ import Icon from "./ui/Icon";
 import StatusPill from "./ui/StatusPill";
 import Button from "./ui/Button";
 import { formatDate, formatKm, dueText } from "../lib/format";
-import { treatmentInfo, treatmentLabel } from "../lib/treatments";
+import { itemLabel, treatmentInfo } from "../lib/treatments";
+import { t } from "../i18n";
 
 const TRACKED = ["ok", "due_soon", "overdue"];
 const URGENCY = { overdue: 0, due_soon: 1, ok: 2 };
@@ -22,18 +23,18 @@ function byUrgency(a, b) {
 
 function whenText(item) {
   const bits = [];
-  if (item.due_date) bits.push(`due ${formatDate(item.due_date)}`);
-  if (item.due_km) bits.push(`at ${formatKm(item.due_km)}`);
-  return bits.join(" or ");
+  if (item.due_date) bits.push(t("due {date}", { date: formatDate(item.due_date) }));
+  if (item.due_km) bits.push(t("at {km}", { km: formatKm(item.due_km) }));
+  return bits.join(t(" or "));
 }
 
 function CoverageNote({ status, coverage }) {
   if (!coverage || coverage.known === 0) return null;
-  const text = `${coverage.known} of ${coverage.tracked} categories tracked`;
+  const text = t("{known} of {tracked} categories tracked", { known: coverage.known, tracked: coverage.tracked });
   if (status === "unknown") {
     return (
       <p className="maint-note">
-        <Icon name="help" size={14} /> Not enough history to call this vehicle healthy ({text}).
+        <Icon name="help" size={14} /> {t("Not enough history to call this vehicle healthy ({text}).", { text })}
       </p>
     );
   }
@@ -57,20 +58,20 @@ export default function MaintenanceStatusPanel({
       <div className="card__header">
         <div>
           <h2 id="maint-title" className="card__title">
-            Maintenance
+            {t("Maintenance")}
           </h2>
-          <p className="card__subtitle">What is due next, by category</p>
+          <p className="card__subtitle">{t("What is due next, by category")}</p>
         </div>
         {carId && (
           <Button as={Link} to={`/car/${carId}/add-record`} size="sm" variant="ghost">
-            <Icon name="plus" size={14} /> Log service
+            <Icon name="plus" size={14} /> {t("Log service")}
           </Button>
         )}
       </div>
 
       {known.length === 0 ? (
         <p className="muted">
-          Nothing tracked yet. Log a service (oil, filters, brakes, tires, battery) and the next due date appears here.
+          {t("Nothing tracked yet. Log a service (oil, filters, brakes, tires, battery) and the next due date appears here.")}
         </p>
       ) : (
         <>
@@ -79,16 +80,16 @@ export default function MaintenanceStatusPanel({
               <Icon name={treatmentInfo(next.part).icon} size={22} />
             </div>
             <div className="maint-next__main">
-              <p className="maint-next__eyebrow">{next.status === "overdue" ? "Needs attention" : "Next up"}</p>
+              <p className="maint-next__eyebrow">{next.status === "overdue" ? t("Needs attention") : t("Next up")}</p>
               <div className="maint-next__row">
-                <h3 className="maint-next__title">{next.label || treatmentLabel(next.part)}</h3>
+                <h3 className="maint-next__title">{itemLabel(next)}</h3>
                 <StatusPill status={next.status} />
               </div>
-              <p className="maint-next__when num">{dueText(next) || whenText(next) || "On schedule"}</p>
+              <p className="maint-next__when num">{dueText(next) || whenText(next) || t("On schedule")}</p>
               <div
                 className={`progress progress--${next.status}`}
                 role="progressbar"
-                aria-label={`${next.label || treatmentLabel(next.part)} interval used`}
+                aria-label={t("{name} interval used", { name: itemLabel(next) })}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={pct(next)}
@@ -107,8 +108,8 @@ export default function MaintenanceStatusPanel({
                     <Icon name={treatmentInfo(item.part).icon} size={16} />
                   </span>
                   <span className="maint-compact__text">
-                    <span className="maint-compact__label">{item.label || treatmentLabel(item.part)}</span>
-                    <span className="maint-compact__when num">{dueText(item) || whenText(item) || "On schedule"}</span>
+                    <span className="maint-compact__label">{itemLabel(item)}</span>
+                    <span className="maint-compact__when num">{dueText(item) || whenText(item) || t("On schedule")}</span>
                   </span>
                   <StatusPill status={item.status} />
                 </li>
@@ -120,7 +121,7 @@ export default function MaintenanceStatusPanel({
 
       {untracked.length > 0 && known.length > 0 && (
         <p className="maint-untracked small">
-          <span className="muted">No history yet:</span> {untracked.map((i) => i.label || treatmentLabel(i.part)).join(", ")}
+          <span className="muted">{t("No history yet:")}</span> {untracked.map((i) => itemLabel(i)).join(t(", "))}
         </p>
       )}
 
@@ -128,9 +129,9 @@ export default function MaintenanceStatusPanel({
 
       {odometer && odometer.odometer_km == null && known.length > 0 && onUpdateOdometer && (
         <p className="muted small">
-          Mileage-based reminders need an odometer reading.{" "}
+          {t("Mileage-based reminders need an odometer reading.")}{" "}
           <button type="button" className="link-button" onClick={onUpdateOdometer}>
-            Set odometer
+            {t("Set odometer")}
           </button>
         </p>
       )}

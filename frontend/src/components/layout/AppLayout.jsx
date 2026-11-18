@@ -7,6 +7,7 @@ import { useAsync } from "../../hooks/useAsync";
 import { api } from "../../services/api";
 import { vehicleTitle } from "../../lib/format";
 import { onProfileUpdated } from "../../lib/profileEvents";
+import { LANGUAGES, useLanguage } from "../../i18n";
 import Icon from "../ui/Icon";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
@@ -24,6 +25,7 @@ function NavItem({ to, icon, label, end }) {
 
 /** Opens the add-service flow: straight to the current vehicle, otherwise asks which vehicle. */
 function LogServiceAction({ className, children }) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const onCar = useMatch("/car/:id/*");
   const [open, setOpen] = useState(false);
@@ -51,7 +53,7 @@ function LogServiceAction({ className, children }) {
         setCars(list);
       }
     } catch (e) {
-      setError(e.message || "Could not load your vehicles.");
+      setError(e.message || t("Could not load your vehicles."));
     }
   }
 
@@ -63,15 +65,15 @@ function LogServiceAction({ className, children }) {
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title="Log a service for..."
+        title={t("Log a service for...")}
         actions={
           <Button variant="secondary" onClick={() => setOpen(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
         }
       >
         {error && <p role="alert" className="form-error">{error}</p>}
-        {!cars && !error && <p className="muted">Loading vehicles...</p>}
+        {!cars && !error && <p className="muted">{t("Loading vehicles...")}</p>}
         {cars && (
           <ul className="pick-list">
             {cars.map((c) => (
@@ -89,7 +91,7 @@ function LogServiceAction({ className, children }) {
                   </span>
                   <span className="pick-list__name">{vehicleTitle(c)}</span>
                   {c.license_plate && <span className="plate">{c.license_plate}</span>}
-                  <Icon name="chevron-right" size={16} className="pick-list__chev" />
+                  <Icon name="chevron-right" size={16} className="pick-list__chev icon--dir" />
                 </button>
               </li>
             ))}
@@ -107,99 +109,105 @@ function useCurrentUser() {
   return me.data;
 }
 
-function AccountMenuItems({ me, isManager }) {
+function AccountMenuItems({ me, roleLabel }) {
+  const { lang, setLanguage, t } = useLanguage();
+  const other = LANGUAGES.find((l) => l.code !== lang) || LANGUAGES[0];
   return (
     <>
       <MenuLabel>
-        Signed in as <strong className="strong">{me?.username || (isManager ? "manager" : "user")}</strong>
+        {t("Signed in as")} <strong className="strong">{me?.username || roleLabel}</strong>
       </MenuLabel>
       <MenuItem to="/profile" icon="user">
-        Profile
+        {t("Profile")}
       </MenuItem>
       <MenuItem to="/change-password" icon="lock">
-        Change password
+        {t("Change password")}
+      </MenuItem>
+      <MenuItem icon="globe" onSelect={() => setLanguage(other.code)}>
+        <span lang={other.code}>{other.label}</span>
       </MenuItem>
       <MenuSeparator />
       <MenuItem icon="logout" onSelect={() => clearAuth()}>
-        Log out
+        {t("Log out")}
       </MenuItem>
     </>
   );
 }
 
 export default function AppLayout() {
+  const { t } = useLanguage();
   const { isManager } = useAuth();
   const me = useCurrentUser();
   const displayName = me?.name || me?.username || "";
-  const roleLabel = isManager ? "Manager" : "Owner";
+  const roleLabel = isManager ? t("Manager") : t("Owner");
 
   return (
     <div className="app">
       <a href="#main" className="skip-link">
-        Skip to content
+        {t("Skip to content")}
       </a>
 
-      <aside className="sidebar" aria-label="Primary">
-        <Link to="/" className="sidebar__brand" aria-label="Repcarparts - Garage">
+      <aside className="sidebar" aria-label={t("Primary")}>
+        <Link to="/" className="sidebar__brand" aria-label={t("Repcarparts - Garage")}>
           <BrandLogo variant="mark" />
           <span className="sidebar__brand-text">
             <span className="sidebar__brand-name">Repcarparts</span>
-            <span className="sidebar__brand-sub">Service manager</span>
+            <span className="sidebar__brand-sub">{t("Service manager")}</span>
           </span>
         </Link>
 
         {!isManager && (
           <LogServiceAction className="btn btn--accent btn--block sidebar__cta">
-            <Icon name="plus" size={16} /> Log service
+            <Icon name="plus" size={16} /> {t("Log service")}
           </LogServiceAction>
         )}
 
-        <nav className="sidebar__nav" aria-label="Main navigation">
-          <p className="sidebar__section">Workspace</p>
-          <NavItem to="/" end icon="garage" label="Garage" />
-          <NavItem to="/reminders" icon="bell" label="Reminders" />
+        <nav className="sidebar__nav" aria-label={t("Main navigation")}>
+          <p className="sidebar__section">{t("Workspace")}</p>
+          <NavItem to="/" end icon="garage" label={t("Garage")} />
+          <NavItem to="/reminders" icon="bell" label={t("Reminders")} />
           {isManager && (
             <>
-              <p className="sidebar__section">Administration</p>
-              <NavItem to="/manager" icon="shield" label="Manager" />
+              <p className="sidebar__section">{t("Administration")}</p>
+              <NavItem to="/manager" icon="shield" label={t("Manager")} />
             </>
           )}
-          <p className="sidebar__section">Account</p>
-          <NavItem to="/profile" icon="user" label="Profile" />
+          <p className="sidebar__section">{t("Account")}</p>
+          <NavItem to="/profile" icon="user" label={t("Profile")} />
         </nav>
 
         <div className="sidebar__foot">
           <Menu
-            label="Account menu"
+            label={t("Account menu")}
             placement="menu__panel--up menu__panel--stretch"
             triggerClassName="user-chip"
             trigger={
               <>
                 <Avatar url={me?.profile_image_url} name={displayName || roleLabel} size={32} />
                 <span className="user-chip__text">
-                  <span className="user-chip__name truncate">{displayName || "Account"}</span>
+                  <span className="user-chip__name truncate">{displayName || t("Account")}</span>
                   <span className="user-chip__role">{roleLabel}</span>
                 </span>
                 <Icon name="chevron-up-down" size={16} className="user-chip__chev" />
               </>
             }
           >
-            <AccountMenuItems me={me} isManager={isManager} />
+            <AccountMenuItems me={me} roleLabel={roleLabel} />
           </Menu>
         </div>
       </aside>
 
       <header className="topbar">
-        <Link to="/" className="topbar__brand" aria-label="Repcarparts - Garage">
+        <Link to="/" className="topbar__brand" aria-label={t("Repcarparts - Garage")}>
           <BrandLogo variant="mark" />
           <span>Repcarparts</span>
         </Link>
         <Menu
-          label="Account menu"
+          label={t("Account menu")}
           triggerClassName="topbar__account"
           trigger={<Avatar url={me?.profile_image_url} name={displayName || roleLabel} size={32} />}
         >
-          <AccountMenuItems me={me} isManager={isManager} />
+          <AccountMenuItems me={me} roleLabel={roleLabel} />
         </Menu>
       </header>
 
@@ -209,19 +217,19 @@ export default function AppLayout() {
         </div>
       </main>
 
-      <nav className="tabbar" aria-label="Primary">
-        <NavItem to="/" end icon="garage" label="Garage" />
+      <nav className="tabbar" aria-label={t("Primary")}>
+        <NavItem to="/" end icon="garage" label={t("Garage")} />
         {!isManager && (
           <LogServiceAction className="tabbar__fab">
             <span className="tabbar__fab-icon" aria-hidden="true">
               <Icon name="plus" size={20} />
             </span>
-            <span>Log service</span>
+            <span>{t("Log service")}</span>
           </LogServiceAction>
         )}
-        <NavItem to="/reminders" icon="bell" label="Reminders" />
-        {isManager && <NavItem to="/manager" icon="shield" label="Manager" />}
-        <NavItem to="/profile" icon="user" label="Profile" />
+        <NavItem to="/reminders" icon="bell" label={t("Reminders")} />
+        {isManager && <NavItem to="/manager" icon="shield" label={t("Manager")} />}
+        <NavItem to="/profile" icon="user" label={t("Profile")} />
       </nav>
     </div>
   );

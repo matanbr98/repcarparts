@@ -1,3 +1,5 @@
+import { t } from "../../i18n";
+
 export default function Skeleton({ width = "100%", height = 16, radius, style, className = "" }) {
   return (
     <span
@@ -11,7 +13,7 @@ export default function Skeleton({ width = "100%", height = 16, radius, style, c
 /** Convenience block: a card-shaped placeholder with a few text lines. */
 export function SkeletonCard({ lines = 3 }) {
   return (
-    <div className="card" role="status" aria-label="Loading">
+    <div className="card" role="status" aria-label={t("Loading")}>
       <div className="stack">
         <Skeleton width="45%" height={20} />
         {Array.from({ length: lines }).map((_, i) => (
