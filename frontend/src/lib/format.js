@@ -1,4 +1,13 @@
-const nf = new Intl.NumberFormat("en-US");
+import { getLanguage, locale, t } from "../i18n";
+
+const formatters = {};
+/** Number formatter for the current language (cached per locale). */
+function nfmt() {
+  const loc = locale();
+  if (!formatters[loc]) formatters[loc] = new Intl.NumberFormat(loc);
+  return formatters[loc];
+}
+const nf = { format: (n) => nfmt().format(n) };
 
 export function formatNumber(n) {
   if (n === null || n === undefined || n === "" || Number.isNaN(Number(n))) return "-";
@@ -7,12 +16,12 @@ export function formatNumber(n) {
 
 export function formatMoney(n) {
   if (n === null || n === undefined || n === "" || Number.isNaN(Number(n))) return "-";
-  return `${nf.format(Number(n))} ILS`;
+  return getLanguage() === "he" ? `${nf.format(Number(n))} ₪` : `${nf.format(Number(n))} ILS`;
 }
 
 export function formatKm(n) {
   if (n === null || n === undefined || n === "" || Number.isNaN(Number(n))) return "-";
-  return `${nf.format(Number(n))} km`;
+  return t("{n} km", { n: nf.format(Number(n)) });
 }
 
 function parseDate(value) {
@@ -25,13 +34,13 @@ function parseDate(value) {
 export function formatDate(value) {
   const d = parseDate(value);
   if (!d) return "-";
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return d.toLocaleDateString(locale(), { day: "numeric", month: "short", year: "numeric" });
 }
 
 export function formatShortDate(value) {
   const d = parseDate(value);
   if (!d) return "-";
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return d.toLocaleDateString(locale(), { day: "numeric", month: "short" });
 }
 
 export function todayISO() {
@@ -48,12 +57,12 @@ export function yearOf(value) {
 export function monthLabel(ym) {
   const [y, m] = String(ym).split("-").map(Number);
   if (!y || !m) return ym;
-  return new Date(y, m - 1, 1).toLocaleDateString("en-GB", { month: "short" });
+  return new Date(y, m - 1, 1).toLocaleDateString(locale(), { month: "short" });
 }
 
 export function vehicleTitle(car) {
   if (!car) return "";
-  return car.nickname || [car.make, car.model].filter(Boolean).join(" ") || "Vehicle";
+  return car.nickname || [car.make, car.model].filter(Boolean).join(" ") || t("Vehicle");
 }
 
 export function vehicleSubtitle(car) {
@@ -67,11 +76,11 @@ export function dueText(item) {
   const parts = [];
   if (typeof item.remaining_days === "number") {
     const d = item.remaining_days;
-    parts.push(d < 0 ? `${Math.abs(d)} days overdue` : `${d} days left`);
+    parts.push(d < 0 ? t("{n} days overdue", { n: Math.abs(d) }) : t("{n} days left", { n: d }));
   }
   if (typeof item.remaining_km === "number") {
     const k = item.remaining_km;
-    parts.push(k < 0 ? `${nf.format(Math.abs(k))} km over` : `${nf.format(k)} km left`);
+    parts.push(k < 0 ? t("{n} km over", { n: nf.format(Math.abs(k)) }) : t("{n} km left", { n: nf.format(k) }));
   }
   return parts.join(" / ");
 }
@@ -95,8 +104,8 @@ export function daysFromToday(value, today = todayISO()) {
 export function relativeDay(value, today = todayISO()) {
   const n = daysFromToday(value, today);
   if (n === null) return "";
-  if (n === 0) return "Today";
-  if (n === 1) return "Tomorrow";
-  if (n === -1) return "Yesterday";
-  return n > 0 ? `In ${n} days` : `${Math.abs(n)} days ago`;
+  if (n === 0) return t("Today");
+  if (n === 1) return t("Tomorrow");
+  if (n === -1) return t("Yesterday");
+  return n > 0 ? t("In {n} days", { n }) : t("{n} days ago", { n: Math.abs(n) });
 }

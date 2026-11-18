@@ -21,8 +21,10 @@ import ServiceTimeline from "../components/ServiceTimeline";
 import DataChecksPanel from "../components/DataChecksPanel";
 import ReceiptLightbox from "../components/ReceiptLightbox";
 import SpendChart from "../components/SpendChart";
-import { TREATMENTS, treatmentLabel } from "../lib/treatments";
+import { TREATMENTS, displayTitle, itemLabel, treatmentLabel } from "../lib/treatments";
 import { exportBaseName, formatDate, formatKm, formatMoney, formatNumber, vehicleSubtitle, vehicleTitle } from "../lib/format";
+import { t, tp } from "../i18n";
+import { warningMessage } from "../lib/warnings";
 
 function useDebounced(value, ms = 300) {
   const [v, setV] = useState(value);
@@ -54,17 +56,17 @@ function ExpensesTab({ carId }) {
   if (seenYear !== undefined && Number.isFinite(seenYear) && seenYear !== firstYear) setFirstYear(seenYear);
   const years = yearOptions(firstYear, year);
 
-  const maxType = Math.max(1, ...(data?.by_type || []).map((t) => t.total || 0));
+  const maxType = Math.max(1, ...(data?.by_type || []).map((row) => row.total || 0));
 
   return (
     <div className="stack-lg" role="tabpanel" id="panel-expenses" aria-labelledby="tab-expenses">
       <div className="spread">
         <div>
-          <h2 className="section-head__title">Expenses</h2>
-          <p className="muted small">What this vehicle has cost, by service type and month.</p>
+          <h2 className="section-head__title">{t("Expenses")}</h2>
+          <p className="muted small">{t("What this vehicle has cost, by service type and month.")}</p>
         </div>
-        <Select label="Period" hideLabel value={year} onChange={(e) => setYear(e.target.value)} fieldClassName="period-select">
-          <option value="">All time</option>
+        <Select label={t("Period")} hideLabel value={year} onChange={(e) => setYear(e.target.value)} fieldClassName="period-select">
+          <option value="">{t("All time")}</option>
           {years.map((y) => (
             <option key={y} value={y}>
               {y}
@@ -78,33 +80,35 @@ function ExpensesTab({ carId }) {
       {data && !error && (
         <>
           <div className="grid-3">
-            <StatCard label="Total spend" value={formatMoney(data.total)} icon="coins" tone="accent" hint={year ? `In ${year}` : "All time"} />
-            <StatCard label={year ? `Spend in ${year}` : "This year"} value={formatMoney(data.year_total)} icon="calendar" />
-            <StatCard label="Services" value={formatNumber(data.records_count)} icon="wrench" hint={year ? `Logged in ${year}` : "Logged in total"} />
+            <StatCard label={t("Total spend")} value={formatMoney(data.total)} icon="coins" tone="accent" hint={year ? t("In {year}", { year }) : t("All time")} />
+            <StatCard label={year ? t("Spend in {year}", { year }) : t("This year")} value={formatMoney(data.year_total)} icon="calendar" />
+            <StatCard label={t("Services")} value={formatNumber(data.records_count)} icon="wrench" hint={year ? t("Logged in {year}", { year }) : t("Logged in total")} />
           </div>
 
           {data.records_count === 0 ? (
             <EmptyState
               icon="coins"
-              title={year ? `No services in ${year}` : "No expenses yet"}
-              text={year ? "Pick another period to see costs." : "Costs show up here once you log services with a price."}
+              title={year ? t("No services in {year}", { year }) : t("No expenses yet")}
+              text={year ? t("Pick another period to see costs.") : t("Costs show up here once you log services with a price.")}
             />
           ) : (
             <>
               <section className="card">
                 <div className="card__header">
-                  <h2 className="card__title">By service type</h2>
-                  <span className="muted small">Total (services)</span>
+                  <h2 className="card__title">{t("By service type")}</h2>
+                  <span className="muted small">{t("Total (services)")}</span>
                 </div>
                 <ul className="bars">
-                  {(data.by_type || []).map((t) => (
-                    <li key={t.treatment_type} className="bars__row">
-                      <span className="bars__label">{t.label || treatmentLabel(t.treatment_type)}</span>
+                  {(data.by_type || []).map((row) => (
+                    <li key={row.treatment_type} className="bars__row">
+                      <span className="bars__label">
+                        {row.treatment_type ? treatmentLabel(row.treatment_type) : displayTitle(row.label)}
+                      </span>
                       <span className="bars__track" aria-hidden="true">
-                        <span className="bars__fill" style={{ width: `${Math.round(((t.total || 0) / maxType) * 100)}%` }} />
+                        <span className="bars__fill" style={{ width: `${Math.round(((row.total || 0) / maxType) * 100)}%` }} />
                       </span>
                       <span className="bars__value num">
-                        {formatMoney(t.total)} <span className="muted small">({t.count})</span>
+                        {formatMoney(row.total)} <span className="muted small">({row.count})</span>
                       </span>
                     </li>
                   ))}
@@ -113,7 +117,7 @@ function ExpensesTab({ carId }) {
               {(data.by_month || []).length > 0 && (
                 <section className="card">
                   <div className="card__header">
-                    <h2 className="card__title">Spend by month</h2>
+                    <h2 className="card__title">{t("Spend by month")}</h2>
                   </div>
                   <SpendChart data={data.by_month} />
                 </section>
@@ -166,13 +170,13 @@ export default function CarDetails() {
     try {
       await api.deleteRecord(id, toDelete.id);
       records.setData((prev) => (prev || []).filter((r) => r.id !== toDelete.id));
-      toast.success("Service deleted");
+      toast.success(t("Service deleted"));
       setToDelete(null);
       due.reload();
       cost.reload();
       overview.reload();
     } catch (e) {
-      toast.error(e.message || "Could not delete the service.");
+      toast.error(e.message || t("Could not delete the service."));
     } finally {
       setDeleting(false);
     }
@@ -182,10 +186,10 @@ export default function CarDetails() {
     setDeleting(true);
     try {
       await api.deleteCar(id);
-      toast.success("Vehicle deleted");
+      toast.success(t("Vehicle deleted"));
       navigate("/", { replace: true });
     } catch (e) {
-      toast.error(e.message || "Could not delete the vehicle.");
+      toast.error(e.message || t("Could not delete the vehicle."));
       setDeleting(false);
     }
   }
@@ -197,7 +201,7 @@ export default function CarDetails() {
       const base = exportBaseName(car.data, id);
       downloadBlob(blob, `${base}-service-history.csv`);
     } catch (e) {
-      toast.error(e.message || "Export failed.");
+      toast.error(e.message || t("Export failed."));
     } finally {
       setExporting(false);
     }
@@ -205,7 +209,7 @@ export default function CarDetails() {
 
   if (car.loading && !car.data) {
     return (
-      <div className="stack-lg" role="status" aria-label="Loading vehicle">
+      <div className="stack-lg" role="status" aria-label={t("Loading vehicle")}>
         <Skeleton width="40%" height={32} />
         <SkeletonCard />
         <SkeletonCard lines={5} />
@@ -216,11 +220,11 @@ export default function CarDetails() {
     return (
       <div className="stack">
         <Link to="/" className="page-header__back">
-          <Icon name="back" size={16} /> Garage
+          <Icon name="back" size={16} className="icon--dir" /> {t("Garage")}
         </Link>
         <ErrorState
           error={car.error}
-          title={car.error.status === 404 ? "Vehicle not found" : "Could not load this vehicle"}
+          title={car.error.status === 404 ? t("Vehicle not found") : t("Could not load this vehicle")}
           onRetry={car.error.status === 404 ? undefined : car.reload}
         />
       </div>
@@ -246,7 +250,7 @@ export default function CarDetails() {
   return (
     <div className="stack-lg">
       <PageHeader
-        back={{ to: "/", label: "Garage" }}
+        back={{ to: "/", label: t("Garage") }}
         leading={
           <span className={`icon-tile icon-tile--lg icon-tile--${status === "unknown" ? "info" : status}`} aria-hidden="true">
             <Icon name="car" size={24} />
@@ -267,26 +271,26 @@ export default function CarDetails() {
         actions={
           <>
             <Button as={Link} to={`/car/${id}/add-record`} variant="accent">
-              <Icon name="plus" size={16} /> Log service
+              <Icon name="plus" size={16} /> {t("Log service")}
             </Button>
             <Button as={Link} to={`/car/${id}/edit`} variant="secondary">
-              <Icon name="edit" size={16} /> Edit
+              <Icon name="edit" size={16} /> {t("Edit")}
             </Button>
             <Menu
-              label="More vehicle actions"
-              tooltip="More actions"
+              label={t("More vehicle actions")}
+              tooltip={t("More actions")}
               triggerClassName="btn btn--secondary btn--icon"
               trigger={<Icon name="more" size={18} />}
             >
               <MenuItem icon="gauge" onSelect={() => setOdoOpen(true)}>
-                Update odometer
+                {t("Update odometer")}
               </MenuItem>
               <MenuItem icon="download" onSelect={exportCsv}>
-                Export history (CSV)
+                {t("Export history (CSV)")}
               </MenuItem>
               <MenuSeparator />
               <MenuItem icon="trash" danger onSelect={() => setConfirmCar(true)}>
-                Delete vehicle
+                {t("Delete vehicle")}
               </MenuItem>
             </Menu>
           </>
@@ -295,58 +299,60 @@ export default function CarDetails() {
 
       <div className="grid-4">
         <StatCard
-          label="Odometer"
+          label={t("Odometer")}
           icon="gauge"
           tone="info"
-          value={odo?.odometer_km != null ? formatKm(odo.odometer_km) : overview.loading ? "..." : "Not set"}
+          value={odo?.odometer_km != null ? formatKm(odo.odometer_km) : overview.loading ? "..." : t("Not set")}
           action={
             overview.data && (
               <button type="button" className="link-button" onClick={() => setOdoOpen(true)}>
-                {odo?.odometer_km != null ? "Update reading" : "Set odometer"}
+                {odo?.odometer_km != null ? t("Update reading") : t("Set odometer")}
               </button>
             )
           }
         />
         <StatCard
-          label="Total spend"
+          label={t("Total spend")}
           icon="coins"
           tone="accent"
           value={cost.data ? formatMoney(cost.data.total_cost) : cost.loading ? "..." : "-"}
-          hint="All services, all time"
+          hint={t("All services, all time")}
         />
         <StatCard
-          label="Next due"
+          label={t("Next due")}
           icon={urgent ? (urgent.status === "overdue" ? "alert" : "clock") : "check-circle"}
           tone={urgent ? (urgent.status === "overdue" ? "danger" : "warn") : "ok"}
-          value={urgent ? urgent.label || treatmentLabel(urgent.part) : due.loading ? "..." : "Nothing due"}
+          value={urgent ? itemLabel(urgent) : due.loading ? "..." : t("Nothing due")}
           hint={
             urgent
               ? urgent.due_date
-                ? `${urgent.status === "overdue" ? "Was due" : "Due"} ${formatDate(urgent.due_date)}`
+                ? urgent.status === "overdue"
+                  ? t("Was due {date}", { date: formatDate(urgent.due_date) })
+                  : t("Due {date}", { date: formatDate(urgent.due_date) })
                 : urgent.status === "overdue"
-                  ? "Overdue"
-                  : "Due soon"
-              : "Based on logged services"
+                  ? t("Overdue")
+                  : t("Due soon")
+              : t("Based on logged services")
           }
         />
         <StatCard
-          label="Tracking coverage"
+          label={t("Tracking coverage")}
           icon="activity"
-          value={coverage ? `${coverage.known} / ${coverage.tracked}` : overview.loading ? "..." : "-"}
-          hint="Maintenance categories with history"
+          value={coverage ? <span dir="ltr">{`${coverage.known} / ${coverage.tracked}`}</span> : overview.loading ? "..." : "-"}
+          hint={t("Maintenance categories with history")}
         />
       </div>
 
       {overview.error && !overview.data && (
-        <ErrorState error={overview.error} title="Could not load the vehicle status" onRetry={overview.reload} />
+        <ErrorState error={overview.error} title={t("Could not load the vehicle status")} onRetry={overview.reload} />
       )}
 
       <div className="detail-layout">
-        <aside className="detail-layout__aside stack-lg" aria-label="Vehicle status">
+        <aside className="detail-layout__aside stack-lg" aria-label={t("Vehicle status")}>
           {(overview.data?.warnings || []).length > 0 && <DataChecksPanel carId={id} warnings={overview.data.warnings} />}
 
           {due.error ? (
-            <ErrorState error={due.error} title="Could not load maintenance status" onRetry={due.reload} />
+            <ErrorState error={due.error} title={t("Could not load maintenance status")} onRetry={due.reload} />
           ) : due.loading && !due.data ? (
             <SkeletonCard lines={4} />
           ) : (
@@ -364,12 +370,12 @@ export default function CarDetails() {
         <div className="detail-layout__main stack-lg">
           <Tabs
             tabs={[
-              { id: "history", label: "Service history", count: records.data && !filtersActive ? list.length : undefined },
-              { id: "expenses", label: "Expenses" },
+              { id: "history", label: t("Service history"), count: records.data && !filtersActive ? list.length : undefined },
+              { id: "expenses", label: t("Expenses") },
             ]}
             value={tab}
             onChange={setTab}
-            label="Vehicle sections"
+            label={t("Vehicle sections")}
           />
 
           {tab === "expenses" ? (
@@ -378,25 +384,25 @@ export default function CarDetails() {
             <div className="stack" role="tabpanel" id="panel-history" aria-labelledby="tab-history">
               <div className="filters">
                 <Input
-                  label="Search services"
+                  label={t("Search services")}
                   hideLabel
                   icon="search"
                   type="search"
-                  placeholder="Search title, notes or parts"
+                  placeholder={t("Search title, notes or parts")}
                   maxLength={100}
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                 />
-                <Select label="Service type" hideLabel value={type} onChange={(e) => setType(e.target.value)}>
-                  <option value="">All types</option>
-                  {TREATMENTS.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
+                <Select label={t("Service type")} hideLabel value={type} onChange={(e) => setType(e.target.value)}>
+                  <option value="">{t("All types")}</option>
+                  {TREATMENTS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {t(opt.label)}
                     </option>
                   ))}
                 </Select>
-                <Select label="Year" hideLabel value={year} onChange={(e) => setYear(e.target.value)}>
-                  <option value="">All years</option>
+                <Select label={t("Year")} hideLabel value={year} onChange={(e) => setYear(e.target.value)}>
+                  <option value="">{t("All years")}</option>
                   {yearOptions(minYear, year).map((y) => (
                     <option key={y} value={y}>
                       {y}
@@ -404,39 +410,39 @@ export default function CarDetails() {
                   ))}
                 </Select>
                 <Button variant="secondary" onClick={exportCsv} loading={exporting} className="filters__export">
-                  <Icon name="download" size={16} /> Export CSV
+                  <Icon name="download" size={16} /> {t("Export CSV")}
                 </Button>
               </div>
 
               {filtersActive && records.data && (
                 <div className="filters__summary">
                   <span className="muted small">
-                    {list.length} matching service{list.length === 1 ? "" : "s"}
+                    {tp(list.length, "1 matching service", "{n} matching services")}
                   </span>
                   <button type="button" className="link-button small" onClick={clearFilters}>
-                    Clear filters
+                    {t("Clear filters")}
                   </button>
                 </div>
               )}
 
               {records.error ? (
-                <ErrorState error={records.error} title="Could not load service history" onRetry={records.reload} />
+                <ErrorState error={records.error} title={t("Could not load service history")} onRetry={records.reload} />
               ) : records.loading && !records.data ? (
-                <div className="stack" role="status" aria-label="Loading service history">
+                <div className="stack" role="status" aria-label={t("Loading service history")}>
                   <SkeletonCard />
                   <SkeletonCard />
                 </div>
               ) : list.length === 0 ? (
                 filtersActive ? (
-                  <EmptyState icon="search" title="No matching services" text="Try a different search or clear the filters.">
+                  <EmptyState icon="search" title={t("No matching services")} text={t("Try a different search or clear the filters.")}>
                     <Button variant="secondary" onClick={clearFilters}>
-                      Clear filters
+                      {t("Clear filters")}
                     </Button>
                   </EmptyState>
                 ) : (
-                  <EmptyState icon="wrench" title="No services logged yet" text="Log the first service to build this vehicle's history.">
+                  <EmptyState icon="wrench" title={t("No services logged yet")} text={t("Log the first service to build this vehicle's history.")}>
                     <Button as={Link} to={`/car/${id}/add-record`} variant="accent">
-                      <Icon name="plus" size={16} /> Log service
+                      <Icon name="plus" size={16} /> {t("Log service")}
                     </Button>
                   </EmptyState>
                 )
@@ -461,7 +467,7 @@ export default function CarDetails() {
         onClose={() => setOdoOpen(false)}
         onSaved={(res) => {
           setOdoOpen(false);
-          (res?.warnings || []).forEach((w) => toast.info(w.message));
+          (res?.warnings || []).forEach((w) => toast.info(warningMessage(w)));
           overview.reload();
           due.reload();
         }}
@@ -471,16 +477,16 @@ export default function CarDetails() {
 
       <ConfirmDialog
         open={!!toDelete}
-        title="Delete this service?"
-        message={toDelete ? `"${toDelete.title}" will be permanently removed from the history.` : ""}
+        title={t("Delete this service?")}
+        message={toDelete ? t("\"{title}\" will be permanently removed from the history.", { title: displayTitle(toDelete.title) }) : ""}
         busy={deleting}
         onCancel={() => setToDelete(null)}
         onConfirm={confirmDeleteRecord}
       />
       <ConfirmDialog
         open={confirmCar}
-        title="Delete this vehicle?"
-        message="The vehicle and all of its service history will be permanently removed."
+        title={t("Delete this vehicle?")}
+        message={t("The vehicle and all of its service history will be permanently removed.")}
         busy={deleting}
         onCancel={() => setConfirmCar(false)}
         onConfirm={confirmDeleteCar}

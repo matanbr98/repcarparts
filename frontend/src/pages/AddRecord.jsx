@@ -5,6 +5,7 @@ import { vehicleTitle } from "../lib/format";
 import PageHeader from "../components/ui/PageHeader";
 import Card from "../components/ui/Card";
 import ServiceForm from "../components/ServiceForm";
+import { t } from "../i18n";
 
 export default function AddRecord() {
   const { id } = useParams();
@@ -13,9 +14,9 @@ export default function AddRecord() {
   return (
     <div className="stack-lg narrow">
       <PageHeader
-        back={{ to: `/car/${id}`, label: name || "Vehicle" }}
-        title="Log a service"
-        subtitle={name ? `Record work done on ${name}.` : "Record work done on this vehicle."}
+        back={{ to: `/car/${id}`, label: name || t("Vehicle") }}
+        title={t("Log a service")}
+        subtitle={name ? t("Record work done on {name}.", { name }) : t("Record work done on this vehicle.")}
       />
       <Card>
         <ServiceForm carId={id} />

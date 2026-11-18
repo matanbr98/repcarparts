@@ -1,7 +1,10 @@
 import BrandLogo from "../BrandLogo";
+import LanguageSwitcher from "../LanguageSwitcher";
+import { useLanguage } from "../../i18n";
 
 /** Split screen: brand panel (desktop) + form panel. Used by Login, Register and the password change. */
 export default function AuthLayout({ title, subtitle, children, footer }) {
+  const { t } = useLanguage();
   return (
     <div className="auth">
       <aside className="auth__brand-panel" aria-hidden="true">
@@ -9,13 +12,14 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
           <BrandLogo variant="full" label="" />
         </div>
         <ul className="auth__points">
-          <li>Every vehicle, service and receipt in one place</li>
-          <li>Know what maintenance is due before it is overdue</li>
-          <li>Spend by vehicle, service type and month</li>
+          <li>{t("Every vehicle, service and receipt in one place")}</li>
+          <li>{t("Know what maintenance is due before it is overdue")}</li>
+          <li>{t("Spend by vehicle, service type and month")}</li>
         </ul>
       </aside>
 
       <main className="auth__main">
+        <LanguageSwitcher variant="button" className="auth__lang" />
         <div className="auth__panel">
           <div className="auth__brand-mobile">
             <BrandLogo variant="mark" />

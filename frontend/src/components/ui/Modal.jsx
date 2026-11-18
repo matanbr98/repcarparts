@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import Button from "./Button";
 import Icon from "./Icon";
+import { t } from "../../i18n";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
 
@@ -76,7 +77,7 @@ export default function Modal({ open, onClose, title, children, actions, wide = 
               {title}
             </h2>
             {onClose && (
-              <button type="button" className="modal__close" onClick={onClose} aria-label="Close dialog" tabIndex={-1}>
+              <button type="button" className="modal__close" onClick={onClose} aria-label={t("Close dialog")} tabIndex={-1}>
                 <Icon name="x" size={18} />
               </button>
             )}
@@ -94,8 +95,8 @@ export function ConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = "Delete",
-  cancelLabel = "Cancel",
+  confirmLabel,
+  cancelLabel,
   danger = true,
   busy = false,
   onConfirm,
@@ -109,10 +110,10 @@ export function ConfirmDialog({
       actions={
         <>
           <Button variant="secondary" onClick={onCancel} disabled={busy} data-autofocus>
-            {cancelLabel}
+            {cancelLabel ?? t("Cancel")}
           </Button>
           <Button variant={danger ? "danger" : "primary"} onClick={onConfirm} loading={busy}>
-            {confirmLabel}
+            {confirmLabel ?? t("Delete")}
           </Button>
         </>
       }

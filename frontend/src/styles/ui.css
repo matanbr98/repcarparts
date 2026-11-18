@@ -163,10 +163,13 @@
 .field__control::placeholder { color: var(--subtle); }
 select.field__control {
   appearance: none;
-  padding-right: 34px;
+  padding-inline-end: 34px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
+}
+[dir="rtl"] select.field__control {
+  background-position: left 10px center;
   cursor: pointer;
 }
 textarea.field__control { min-height: 96px; resize: vertical; }
@@ -183,10 +186,10 @@ textarea.field__control { min-height: 96px; resize: vertical; }
 /* input with a leading icon */
 .field__wrap { position: relative; display: block; }
 .field__wrap > .field__icon {
-  position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  position: absolute; inset-inline-start: 11px; top: 50%; transform: translateY(-50%);
   color: var(--subtle); pointer-events: none;
 }
-.field__wrap > .field__control { padding-left: 36px; }
+.field__wrap > .field__control { padding-inline-start: 36px; }
 
 /* iOS zooms inputs below 16px */
 @media (max-width: 640px) {
@@ -204,11 +207,12 @@ textarea.field__control { min-height: 96px; resize: vertical; }
   background: var(--gray-300); transition: background var(--transition);
 }
 .switch__track::after {
-  content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  content: ""; position: absolute; top: 2px; inset-inline-start: 2px; width: 16px; height: 16px; border-radius: 50%;
   background: #fff; box-shadow: var(--shadow-sm); transition: transform var(--transition);
 }
 .switch input:checked + .switch__track { background: var(--accent-strong); }
 .switch input:checked + .switch__track::after { transform: translateX(16px); }
+[dir="rtl"] .switch input:checked + .switch__track::after { transform: translateX(-16px); }
 .switch input:focus-visible + .switch__track { box-shadow: var(--focus-ring); }
 .switch__text { display: grid; gap: 2px; }
 .switch__label { font-weight: 550; font-size: var(--text-base); }
@@ -225,7 +229,7 @@ textarea.field__control { min-height: 96px; resize: vertical; }
 .badge--button { cursor: pointer; font-family: inherit; transition: border-color var(--transition), background var(--transition); }
 .badge--button:hover { border-color: var(--gray-300); background: var(--surface); }
 .badge--button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
-.badge__action { margin-left: 2px; padding-left: 6px; border-left: 1px solid var(--border-strong); color: var(--link); }
+.badge__action { margin-inline-start: 2px; padding-inline-start: 6px; border-inline-start: 1px solid var(--border-strong); color: var(--link); }
 .badge--teal, .badge--accent { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--orange-100); }
 .badge--info { background: var(--info-bg); color: var(--info); border-color: var(--steel-100); }
 .badge--ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-border); }
@@ -305,19 +309,19 @@ textarea.field__control { min-height: 96px; resize: vertical; }
 /* ---------- Dropdown menu ---------- */
 .menu { position: relative; display: inline-flex; }
 .menu__panel {
-  position: absolute; z-index: var(--z-menu); top: calc(100% + 6px); right: 0;
+  position: absolute; z-index: var(--z-menu); top: calc(100% + 6px); inset-inline-end: 0;
   min-width: 200px; padding: 4px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
   animation: pop-in 120ms var(--ease);
 }
 .menu__panel--up { top: auto; bottom: calc(100% + 6px); }
-.menu__panel--left { right: auto; left: 0; }
-.menu__panel--stretch { left: 0; right: 0; min-width: 0; }
+.menu__panel--left { inset-inline-end: auto; inset-inline-start: 0; }
+.menu__panel--stretch { inset-inline: 0; min-width: 0; }
 .menu__item {
   width: 100%; display: flex; align-items: center; gap: 10px;
   min-height: 34px; padding: 0 10px; border-radius: var(--radius-sm);
-  background: none; border: 0; cursor: pointer; text-align: left;
+  background: none; border: 0; cursor: pointer; text-align: start;
   font-size: var(--text-base); color: var(--text-2); text-decoration: none;
 }
 .menu__item:hover, .menu__item:focus-visible { background: var(--surface-3); color: var(--text); text-decoration: none; outline: none; }
@@ -344,7 +348,7 @@ textarea.field__control { min-height: 96px; resize: vertical; }
 
 /* ---------- Toasts ---------- */
 .toasts {
-  position: fixed; z-index: var(--z-toast); right: var(--sp-5); bottom: var(--sp-5);
+  position: fixed; z-index: var(--z-toast); inset-inline-end: var(--sp-5); bottom: var(--sp-5);
   display: grid; gap: var(--sp-2); width: min(380px, calc(100vw - 32px));
 }
 .toast {
@@ -365,7 +369,7 @@ textarea.field__control { min-height: 96px; resize: vertical; }
 }
 .toast__close:hover { background: var(--surface-3); color: var(--text); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
-@media (max-width: 860px) { .toasts { right: var(--sp-4); bottom: calc(var(--tabbar-h) + var(--sp-3) + env(safe-area-inset-bottom, 0)); } }
+@media (max-width: 860px) { .toasts { inset-inline-end: var(--sp-4); bottom: calc(var(--tabbar-h) + var(--sp-3) + env(safe-area-inset-bottom, 0)); } }
 
 /* ---------- Skeleton ---------- */
 .skeleton {
@@ -412,7 +416,7 @@ textarea.field__control { min-height: 96px; resize: vertical; }
 .tabs__tab {
   display: inline-flex; align-items: center; gap: 6px;
   background: none; border: 0; border-bottom: 2px solid transparent; flex: none;
-  padding: 0 4px; margin-right: var(--sp-4); min-height: 42px; font-weight: 550; font-size: var(--text-base);
+  padding: 0 4px; margin-inline-end: var(--sp-4); min-height: 42px; font-weight: 550; font-size: var(--text-base);
   color: var(--muted); cursor: pointer;
   transition: color var(--transition), border-color var(--transition);
 }
@@ -448,7 +452,7 @@ textarea.field__control { min-height: 96px; resize: vertical; }
 .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--text-base); }
 .table th {
   position: sticky; top: 0; z-index: 1;
-  text-align: left; font-size: var(--text-xs); font-weight: 550; color: var(--muted);
+  text-align: start; font-size: var(--text-xs); font-weight: 550; color: var(--muted);
   background: var(--surface-2); padding: 9px 16px; white-space: nowrap;
   border-bottom: 1px solid var(--border);
 }
@@ -456,7 +460,7 @@ textarea.field__control { min-height: 96px; resize: vertical; }
 .table tbody tr { transition: background var(--transition); }
 .table tbody tr:hover { background: var(--gray-25); }
 .table tr:last-child td { border-bottom: 0; }
-.table__num { text-align: right !important; }
+.table__num { text-align: end !important; }
 .table__muted { color: var(--muted); }
 .table-bar { display: flex; align-items: center; gap: var(--sp-3); justify-content: flex-end; }
 .table-bar__track { width: 96px; height: 6px; border-radius: var(--radius-full); background: var(--surface-3); overflow: hidden; flex: none; }
@@ -468,10 +472,10 @@ textarea.field__control { min-height: 96px; resize: vertical; }
   .table--stack, .table--stack tbody, .table--stack tr, .table--stack td { display: block; width: 100%; }
   .table--stack tr { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border); }
   .table--stack tr:last-child { border-bottom: 0; }
-  .table--stack td { padding: 3px 0; border: 0; display: flex; justify-content: space-between; gap: var(--sp-3); text-align: right; }
-  .table--stack td::before { content: attr(data-label); color: var(--muted); font-size: var(--text-sm); text-align: left; flex: none; }
+  .table--stack td { padding: 3px 0; border: 0; display: flex; justify-content: space-between; gap: var(--sp-3); text-align: end; }
+  .table--stack td::before { content: attr(data-label); color: var(--muted); font-size: var(--text-sm); text-align: start; flex: none; }
   .table--stack td[data-label=""]::before { content: none; }
-  .table--stack td.table__primary { justify-content: flex-start; text-align: left; padding-bottom: 6px; }
+  .table--stack td.table__primary { justify-content: flex-start; text-align: start; padding-bottom: 6px; }
   .table--stack td.table__primary::before { content: none; }
   .table--stack .table-bar__track { width: 64px; }
 }

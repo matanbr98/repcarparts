@@ -14,6 +14,7 @@ import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import ReceiptLightbox from "../components/ReceiptLightbox";
 import { formatDate, relativeDay, todayISO, vehicleTitle } from "../lib/format";
+import { t } from "../i18n";
 
 function ReminderItem({ r, overdue, onToggle, onDelete, onImage, busy }) {
   const isSelf = r.source === "self";
@@ -24,7 +25,7 @@ function ReminderItem({ r, overdue, onToggle, onDelete, onImage, busy }) {
         className="reminder__check"
         role="checkbox"
         aria-checked={!!r.done}
-        aria-label={r.done ? `Mark "${r.title}" as not done` : `Mark "${r.title}" as done`}
+        aria-label={r.done ? t("Mark \"{title}\" as not done", { title: r.title }) : t("Mark \"{title}\" as done", { title: r.title })}
         onClick={() => onToggle(r)}
         disabled={busy}
       >
@@ -35,17 +36,17 @@ function ReminderItem({ r, overdue, onToggle, onDelete, onImage, busy }) {
           <strong className="reminder__title">{r.title}</strong>
           {overdue && (
             <span className="badge badge--overdue">
-              <Icon name="alert" size={12} /> Overdue
+              <Icon name="alert" size={12} /> {t("Overdue")}
             </span>
           )}
-          <Badge tone={isSelf ? undefined : "info"}>{isSelf ? "My reminder" : "From manager"}</Badge>
+          <Badge tone={isSelf ? undefined : "info"}>{isSelf ? t("My reminder") : t("From manager")}</Badge>
         </div>
         {r.message && <p className="reminder__msg">{r.message}</p>}
         {(r.due_date || r.car_label || (r.done && r.done_at)) && (
           <ul className="reminder__meta">
             {r.due_date && (
               <li>
-                <Icon name="calendar" size={13} /> Due {formatDate(r.due_date)}
+                <Icon name="calendar" size={13} /> {t("Due {date}", { date: formatDate(r.due_date) })}
                 {!r.done && <span className="subtle"> · {relativeDay(r.due_date)}</span>}
               </li>
             )}
@@ -56,13 +57,13 @@ function ReminderItem({ r, overdue, onToggle, onDelete, onImage, busy }) {
             )}
             {r.done && r.done_at && (
               <li>
-                <Icon name="check-circle" size={13} /> Done {formatDate(r.done_at)}
+                <Icon name="check-circle" size={13} /> {t("Done {date}", { date: formatDate(r.done_at) })}
               </li>
             )}
           </ul>
         )}
         {r.image_url && (
-          <button type="button" className="receipt-thumb receipt-thumb--sm" onClick={() => onImage(r)} aria-label={`View image for ${r.title}`}>
+          <button type="button" className="receipt-thumb receipt-thumb--sm" onClick={() => onImage(r)} aria-label={t("View image for {title}", { title: r.title })}>
             <img src={assetUrl(r.image_url)} alt="" loading="lazy" />
           </button>
         )}
@@ -73,8 +74,8 @@ function ReminderItem({ r, overdue, onToggle, onDelete, onImage, busy }) {
           variant="ghost"
           className="btn--icon reminder__delete"
           onClick={() => onDelete(r)}
-          aria-label={`Delete ${r.title}`}
-          data-tooltip="Delete"
+          aria-label={t("Delete {title}", { title: r.title })}
+          data-tooltip={t("Delete")}
         >
           <Icon name="trash" size={15} />
         </Button>
@@ -122,7 +123,7 @@ function NewReminderModal({ open, onClose, onCreated }) {
   async function submit(e) {
     e.preventDefault();
     if (!form.title.trim()) {
-      setErrors({ title: "Enter a title." });
+      setErrors({ title: t("Enter a title.") });
       return;
     }
     setSaving(true);
@@ -132,7 +133,7 @@ function NewReminderModal({ open, onClose, onCreated }) {
       if (form.due_date) payload.due_date = form.due_date;
       if (form.car_id) payload.car_id = Number(form.car_id);
       const created = await api.createReminder(payload);
-      toast.success("Reminder added");
+      toast.success(t("Reminder added"));
       setForm({ title: "", message: "", due_date: "", car_id: "" });
       onCreated(created);
     } catch (err) {
@@ -143,14 +144,14 @@ function NewReminderModal({ open, onClose, onCreated }) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="New reminder">
+    <Modal open={open} onClose={onClose} title={t("New reminder")}>
       <form className="stack" onSubmit={submit} noValidate>
-        <Input label="Title" value={form.title} onChange={set("title")} error={errors.title} data-autofocus maxLength={120} />
-        <Textarea label="Details" optional value={form.message} onChange={set("message")} error={errors.message} />
+        <Input label={t("Title")} value={form.title} onChange={set("title")} error={errors.title} data-autofocus maxLength={120} />
+        <Textarea label={t("Details")} optional value={form.message} onChange={set("message")} error={errors.message} />
         <div className="grid-2">
-          <Input label="Due date" type="date" optional min={todayISO()} value={form.due_date} onChange={set("due_date")} error={errors.due_date} />
-          <Select label="Vehicle" optional value={form.car_id} onChange={set("car_id")} error={errors.car_id}>
-            <option value="">No vehicle</option>
+          <Input label={t("Due date")} type="date" optional min={todayISO()} value={form.due_date} onChange={set("due_date")} error={errors.due_date} />
+          <Select label={t("Vehicle")} optional value={form.car_id} onChange={set("car_id")} error={errors.car_id}>
+            <option value="">{t("No vehicle")}</option>
             {(cars.data || []).map((c) => (
               <option key={c.id} value={c.id}>
                 {vehicleTitle(c)}
@@ -165,10 +166,10 @@ function NewReminderModal({ open, onClose, onCreated }) {
         )}
         <div className="modal__actions">
           <Button variant="secondary" onClick={onClose} disabled={saving}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" variant="primary" loading={saving}>
-            Add reminder
+            {t("Add reminder")}
           </Button>
         </div>
       </form>
@@ -203,7 +204,7 @@ export default function Reminders() {
       const updated = await api.setReminderDone(r.id, !r.done);
       setData((prev) => (prev || []).map((x) => (x.id === r.id ? { ...x, ...(updated || {}), done: !r.done } : x)));
     } catch (e) {
-      toast.error(e.message || "Could not update the reminder.");
+      toast.error(e.message || t("Could not update the reminder."));
     } finally {
       setBusyId(null);
     }
@@ -214,10 +215,10 @@ export default function Reminders() {
     try {
       await api.deleteReminder(toDelete.id);
       setData((prev) => (prev || []).filter((x) => x.id !== toDelete.id));
-      toast.success("Reminder deleted");
+      toast.success(t("Reminder deleted"));
       setToDelete(null);
     } catch (e) {
-      toast.error(e.message || "Could not delete the reminder.");
+      toast.error(e.message || t("Could not delete the reminder."));
     } finally {
       setDeleting(false);
     }
@@ -231,51 +232,51 @@ export default function Reminders() {
   return (
     <div className="stack-lg">
       <PageHeader
-        title="Reminders"
-        subtitle="Service nudges from your manager and notes to yourself."
+        title={t("Reminders")}
+        subtitle={t("Service nudges from your manager and notes to yourself.")}
         actions={
           <Button variant="accent" onClick={() => setCreating(true)}>
-            <Icon name="plus" size={16} /> New reminder
+            <Icon name="plus" size={16} /> {t("New reminder")}
           </Button>
         }
       />
 
       {error && !data ? (
-        <ErrorState error={error} title="Could not load reminders" onRetry={reload} />
+        <ErrorState error={error} title={t("Could not load reminders")} onRetry={reload} />
       ) : loading && !data ? (
-        <div className="stack" role="status" aria-label="Loading reminders">
+        <div className="stack" role="status" aria-label={t("Loading reminders")}>
           <SkeletonCard />
           <SkeletonCard />
         </div>
       ) : total === 0 ? (
-        <EmptyState icon="bell" title="Nothing to remember" text="Add a reminder for an upcoming service, an inspection or anything car related.">
+        <EmptyState icon="bell" title={t("Nothing to remember")} text={t("Add a reminder for an upcoming service, an inspection or anything car related.")}>
           <Button variant="primary" onClick={() => setCreating(true)}>
-            <Icon name="plus" size={16} /> New reminder
+            <Icon name="plus" size={16} /> {t("New reminder")}
           </Button>
         </EmptyState>
       ) : (
         <>
           <Segmented
-            label="Show reminders"
+            label={t("Show reminders")}
             value={view}
             onChange={setView}
             options={[
-              { value: "open", label: "Open", count: groups.overdue.length + groups.upcoming.length },
-              { value: "overdue", label: "Overdue", count: groups.overdue.length },
-              { value: "done", label: "Done", count: groups.done.length },
-              { value: "all", label: "All", count: total },
+              { value: "open", label: t("Open"), count: groups.overdue.length + groups.upcoming.length },
+              { value: "overdue", label: t("Overdue"), count: groups.overdue.length },
+              { value: "done", label: t("Done"), count: groups.done.length },
+              { value: "all", label: t("All"), count: total },
             ]}
           />
-          {show("overdue") && <Group title="Overdue" items={groups.overdue} overdue {...handlers} busy={busyId !== null} />}
-          {show("upcoming") && <Group title="Upcoming" items={groups.upcoming} {...handlers} busy={busyId !== null} />}
-          {show("done") && <Group title="Done" items={groups.done} {...handlers} busy={busyId !== null} />}
+          {show("overdue") && <Group title={t("Overdue")} items={groups.overdue} overdue {...handlers} busy={busyId !== null} />}
+          {show("upcoming") && <Group title={t("Upcoming")} items={groups.upcoming} {...handlers} busy={busyId !== null} />}
+          {show("done") && <Group title={t("Done")} items={groups.done} {...handlers} busy={busyId !== null} />}
           {((view === "open" && groups.overdue.length + groups.upcoming.length === 0) ||
             (view === "overdue" && groups.overdue.length === 0) ||
             (view === "done" && groups.done.length === 0)) && (
             <EmptyState
               icon={view === "done" ? "inbox" : "check-circle"}
-              title={view === "done" ? "Nothing completed yet" : "You're all caught up"}
-              text={view === "done" ? "Reminders you tick off appear here." : "No open reminders in this view."}
+              title={view === "done" ? t("Nothing completed yet") : t("You're all caught up")}
+              text={view === "done" ? t("Reminders you tick off appear here.") : t("No open reminders in this view.")}
             />
           )}
         </>
@@ -291,8 +292,8 @@ export default function Reminders() {
       />
       <ConfirmDialog
         open={!!toDelete}
-        title="Delete this reminder?"
-        message={toDelete ? `"${toDelete.title}" will be removed.` : ""}
+        title={t("Delete this reminder?")}
+        message={toDelete ? t("\"{title}\" will be removed.", { title: toDelete.title }) : ""}
         busy={deleting}
         onCancel={() => setToDelete(null)}
         onConfirm={confirmDelete}

@@ -17,6 +17,7 @@ import ReceiptDropzone from "../components/ReceiptDropzone";
 import { validateImage } from "../lib/images";
 import { formatMoney, formatNumber, vehicleTitle } from "../lib/format";
 import { treatmentLabel } from "../lib/treatments";
+import { t, tp } from "../i18n";
 
 function SendReminderForm({ users, cars }) {
   const toast = useToast();
@@ -42,9 +43,9 @@ function SendReminderForm({ users, cars }) {
   async function onSubmit(e) {
     e.preventDefault();
     const v = {};
-    if (!form.title.trim()) v.title = "Enter a title.";
-    if (!form.message.trim()) v.message = "Enter a message.";
-    if (!form.broadcast_all_users && !form.target_user_id) v.target_user_id = "Choose a user.";
+    if (!form.title.trim()) v.title = t("Enter a title.");
+    if (!form.message.trim()) v.message = t("Enter a message.");
+    if (!form.broadcast_all_users && !form.target_user_id) v.target_user_id = t("Choose a user.");
     if (file) {
       const m = validateImage(file);
       if (m) v.image = m;
@@ -66,7 +67,7 @@ function SendReminderForm({ users, cars }) {
       if (file) fd.append("image", file);
       const res = await api.managerSendReminder(fd);
       const n = Array.isArray(res) ? res.length : 1;
-      toast.success(`Sent ${n} reminder${n === 1 ? "" : "s"}`);
+      toast.success(tp(n, "Sent 1 reminder", "Sent {n} reminders"));
       setForm((p) => ({ ...p, title: "", message: "", due_date: "" }));
       setFile(null);
     } catch (err) {
@@ -78,16 +79,16 @@ function SendReminderForm({ users, cars }) {
 
   return (
     <form className="stack" onSubmit={onSubmit} noValidate>
-      <Input label="Title" value={form.title} onChange={set("title")} error={errors.title} />
-      <Textarea label="Message" value={form.message} onChange={set("message")} error={errors.message} />
+      <Input label={t("Title")} value={form.title} onChange={set("title")} error={errors.title} />
+      <Textarea label={t("Message")} value={form.message} onChange={set("message")} error={errors.message} />
 
       <div className="form-section">
         <Switch
-          label="Send to all users"
+          label={t("Send to all users")}
           description={
             form.broadcast_all_users
-              ? `Every customer account (${customers.length}) receives this reminder.`
-              : "Choose one customer and, optionally, one of their vehicles."
+              ? t("Every customer account ({n}) receives this reminder.", { n: customers.length })
+              : t("Choose one customer and, optionally, one of their vehicles.")
           }
           checked={form.broadcast_all_users}
           onChange={(e) => setForm((p) => ({ ...p, broadcast_all_users: e.target.checked, target_car_id: "" }))}
@@ -96,7 +97,7 @@ function SendReminderForm({ users, cars }) {
       {!form.broadcast_all_users && (
         <div className="grid-2">
           <Select
-            label="User"
+            label={t("User")}
             value={form.target_user_id}
             onChange={(e) => {
               setForm((p) => ({ ...p, target_user_id: e.target.value, target_car_id: "" }));
@@ -104,7 +105,7 @@ function SendReminderForm({ users, cars }) {
             }}
             error={errors.target_user_id}
           >
-            <option value="">Select user...</option>
+            <option value="">{t("Select user...")}</option>
             {customers.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.username} (#{u.id})
@@ -112,14 +113,14 @@ function SendReminderForm({ users, cars }) {
             ))}
           </Select>
           <Select
-            label="Vehicle"
+            label={t("Vehicle")}
             optional
             value={form.target_car_id}
             onChange={set("target_car_id")}
             disabled={!form.target_user_id}
             error={errors.target_car_id}
           >
-            <option value="">No specific vehicle</option>
+            <option value="">{t("No specific vehicle")}</option>
             {userCars.map((c) => (
               <option key={c.id} value={c.id}>
                 {vehicleTitle(c)} (#{c.id})
@@ -130,9 +131,9 @@ function SendReminderForm({ users, cars }) {
       )}
       </div>
 
-      <Input label="Due date" type="date" optional value={form.due_date} onChange={set("due_date")} error={errors.due_date} />
+      <Input label={t("Due date")} type="date" optional value={form.due_date} onChange={set("due_date")} error={errors.due_date} />
 
-      <ReceiptDropzone label="Attach image" file={file} onChange={setFile} error={errors.image} />
+      <ReceiptDropzone label={t("Attach image")} file={file} onChange={setFile} error={errors.image} />
 
       {errors.form && (
         <p className="form-error" role="alert">
@@ -141,7 +142,7 @@ function SendReminderForm({ users, cars }) {
       )}
       <div className="form-actions">
         <Button type="submit" variant="accent" loading={sending}>
-          <Icon name="send" size={16} /> Send reminder
+          <Icon name="send" size={16} /> {t("Send reminder")}
         </Button>
       </div>
     </form>
@@ -164,40 +165,40 @@ function UsersPanel({ users }) {
     <section className="card card--flush" role="tabpanel" id="panel-users" aria-labelledby="tab-users">
       <div className="card__header">
         <Input
-          label="Search users"
+          label={t("Search users")}
           hideLabel
           icon="search"
           type="search"
-          placeholder="Search name, username, email or phone"
+          placeholder={t("Search name, username, email or phone")}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           fieldClassName="toolbar__search"
         />
         <Segmented
-          label="Filter by role"
+          label={t("Filter by role")}
           value={role}
           onChange={setRole}
           options={[
-            { value: "all", label: "All", count: users.length },
-            { value: "customer", label: "Customers", count: users.length - managers },
-            { value: "manager", label: "Managers", count: managers },
+            { value: "all", label: t("All"), count: users.length },
+            { value: "customer", label: t("Customers"), count: users.length - managers },
+            { value: "manager", label: t("Managers"), count: managers },
           ]}
         />
       </div>
       {users.length === 0 ? (
-        <EmptyState compact icon="users" title="No users yet" />
+        <EmptyState compact icon="users" title={t("No users yet")} />
       ) : visible.length === 0 ? (
-        <EmptyState compact icon="search" title="No users match" text="Try a different search or role filter." />
+        <EmptyState compact icon="search" title={t("No users match")} text={t("Try a different search or role filter.")} />
       ) : (
         <div className="table-wrap">
           <table className="table table--stack">
             <thead>
               <tr>
-                <th scope="col">User</th>
-                <th scope="col">Role</th>
-                <th scope="col">Email</th>
-                <th scope="col">Phone</th>
-                <th scope="col" className="table__num">ID</th>
+                <th scope="col">{t("User")}</th>
+                <th scope="col">{t("Role")}</th>
+                <th scope="col">{t("Email")}</th>
+                <th scope="col">{t("Phone")}</th>
+                <th scope="col" className="table__num">{t("ID")}</th>
               </tr>
             </thead>
             <tbody>
@@ -212,19 +213,19 @@ function UsersPanel({ users }) {
                       </span>
                     </span>
                   </td>
-                  <td data-label="Role">
+                  <td data-label={t("Role")}>
                     <span className={`badge ${u.role === "manager" ? "badge--accent" : ""}`}>
                       {u.role === "manager" && <Icon name="shield" size={12} />}
-                      {u.role}
+                      {u.role === "manager" ? t("Manager") : t("Customer")}
                     </span>
                   </td>
-                  <td data-label="Email" className="table__muted">
+                  <td data-label={t("Email")} className="table__muted">
                     {u.email ? <a href={`mailto:${u.email}`}>{u.email}</a> : "-"}
                   </td>
-                  <td data-label="Phone" className="table__muted num">
+                  <td data-label={t("Phone")} className="table__muted num">
                     {u.phone || "-"}
                   </td>
-                  <td data-label="ID" className="num table__num table__muted">
+                  <td data-label={t("ID")} className="num table__num table__muted">
                     #{u.id}
                   </td>
                 </tr>
@@ -246,21 +247,21 @@ function PartsPanel({ parts }) {
     <section className="card card--flush" role="tabpanel" id="panel-parts" aria-labelledby="tab-parts">
       <div className="card__header">
         <div>
-          <h2 className="card__title">Average cost per part</h2>
-          <p className="card__subtitle">Across all service records in the fleet</p>
+          <h2 className="card__title">{t("Average cost per part")}</h2>
+          <p className="card__subtitle">{t("Across all service records in the fleet")}</p>
         </div>
       </div>
       {parts.length === 0 ? (
-        <EmptyState compact icon="chart" title="No parts data yet" text="Averages appear once services with a cost are logged." />
+        <EmptyState compact icon="chart" title={t("No parts data yet")} text={t("Averages appear once services with a cost are logged.")} />
       ) : (
         <>
           <div className="table-wrap">
             <table className="table table--stack">
               <thead>
                 <tr>
-                  <th scope="col">Part</th>
-                  <th scope="col" className="table__num">Records</th>
-                  <th scope="col" className="table__num">Average (ILS)</th>
+                  <th scope="col">{t("Part")}</th>
+                  <th scope="col" className="table__num">{t("Records")}</th>
+                  <th scope="col" className="table__num">{t("Average (ILS)")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -269,10 +270,10 @@ function PartsPanel({ parts }) {
                     <td className="table__primary">
                       <strong>{treatmentLabel(p.part)}</strong>
                     </td>
-                    <td data-label="Records" className="num table__num">
+                    <td data-label={t("Records")} className="num table__num">
                       {p.count}
                     </td>
-                    <td data-label="Average (ILS)" className="num table__num">
+                    <td data-label={t("Average (ILS)")} className="num table__num">
                       <span className="table-bar">
                         <span className="table-bar__track" aria-hidden="true">
                           <span
@@ -291,7 +292,7 @@ function PartsPanel({ parts }) {
           {parts.length > 30 && (
             <div className="table-foot">
               <Button variant="ghost" size="sm" onClick={() => setShowAll((v) => !v)}>
-                {showAll ? "Show top 30" : `Show all ${parts.length} parts`}
+                {showAll ? t("Show top 30") : t("Show all {n} parts", { n: parts.length })}
               </Button>
             </div>
           )}
@@ -316,21 +317,21 @@ export default function ManagerDashboard() {
   return (
     <div className="stack-lg">
       <PageHeader
-        title="Manager dashboard"
-        subtitle="Users, spend across the fleet and reminders."
+        title={t("Manager dashboard")}
+        subtitle={t("Users, spend across the fleet and reminders.")}
         actions={
           data && (
             <Button variant="accent" onClick={() => setTab("send")}>
-              <Icon name="send" size={16} /> Send reminder
+              <Icon name="send" size={16} /> {t("Send reminder")}
             </Button>
           )
         }
       />
 
       {error && !data ? (
-        <ErrorState error={error} title="Could not load the dashboard" onRetry={reload} />
+        <ErrorState error={error} title={t("Could not load the dashboard")} onRetry={reload} />
       ) : loading && !data ? (
-        <div className="stack-lg" role="status" aria-label="Loading dashboard">
+        <div className="stack-lg" role="status" aria-label={t("Loading dashboard")}>
           <div className="grid-4">
             {[0, 1, 2, 3].map((i) => (
               <Skeleton key={i} height={104} radius={14} />
@@ -341,21 +342,21 @@ export default function ManagerDashboard() {
       ) : (
         <>
           <div className="grid-4">
-            <StatCard label="Users" value={formatNumber(data.stats.users)} icon="users" tone="info" hint="Registered accounts" />
-            <StatCard label="Vehicles" value={formatNumber(data.stats.cars)} icon="car" hint="Across all users" />
-            <StatCard label="Service records" value={formatNumber(data.stats.records)} icon="wrench" hint="Logged in total" />
-            <StatCard label="Total cost" value={formatMoney(data.stats.total_cost)} icon="coins" tone="accent" hint="All records, all time" />
+            <StatCard label={t("Users")} value={formatNumber(data.stats.users)} icon="users" tone="info" hint={t("Registered accounts")} />
+            <StatCard label={t("Vehicles")} value={formatNumber(data.stats.cars)} icon="car" hint={t("Across all users")} />
+            <StatCard label={t("Service records")} value={formatNumber(data.stats.records)} icon="wrench" hint={t("Logged in total")} />
+            <StatCard label={t("Total cost")} value={formatMoney(data.stats.total_cost)} icon="coins" tone="accent" hint={t("All records, all time")} />
           </div>
 
           <div className="stack">
             <Tabs
-              label="Manager sections"
+              label={t("Manager sections")}
               value={tab}
               onChange={setTab}
               tabs={[
-                { id: "users", label: "Users", count: data.users.length },
-                { id: "parts", label: "Cost per part", count: data.parts.length },
-                { id: "send", label: "Send reminder" },
+                { id: "users", label: t("Users"), count: data.users.length },
+                { id: "parts", label: t("Cost per part"), count: data.parts.length },
+                { id: "send", label: t("Send reminder") },
               ]}
             />
 
@@ -365,8 +366,8 @@ export default function ManagerDashboard() {
               <section className="card send-card" role="tabpanel" id="panel-send" aria-labelledby="tab-send">
                 <div className="card__header card__header--bordered">
                   <div>
-                    <h2 className="card__title">Send reminder</h2>
-                    <p className="card__subtitle">It appears in each recipient&apos;s Reminders list, marked &quot;From manager&quot;.</p>
+                    <h2 className="card__title">{t("Send reminder")}</h2>
+                    <p className="card__subtitle">{t("It appears in each recipient's Reminders list, marked \"From manager\".")}</p>
                   </div>
                 </div>
                 <SendReminderForm users={data.users} cars={data.cars} />

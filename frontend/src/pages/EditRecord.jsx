@@ -7,6 +7,7 @@ import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import ServiceForm from "../components/ServiceForm";
 import { vehicleTitle } from "../lib/format";
+import { t } from "../i18n";
 
 export default function EditRecord() {
   const { id, recordId } = useParams();
@@ -20,7 +21,7 @@ export default function EditRecord() {
     const records = await api.getRecords(id);
     const rec = records.find((r) => String(r.id) === String(recordId));
     if (!rec) {
-      const e = new Error("Service record not found");
+      const e = new Error(t("Service record not found"));
       e.status = 404;
       throw e;
     }
@@ -30,9 +31,9 @@ export default function EditRecord() {
   return (
     <div className="stack-lg narrow">
       <PageHeader
-        back={{ to: `/car/${id}`, label: name || "Vehicle" }}
-        title="Edit service"
-        subtitle={name ? `Update a service on ${name}.` : undefined}
+        back={{ to: `/car/${id}`, label: name || t("Vehicle") }}
+        title={t("Edit service")}
+        subtitle={name ? t("Update a service on {name}.", { name }) : undefined}
       />
       {error ? (
         <ErrorState error={error} onRetry={error.status === 404 ? undefined : reload} />

@@ -1,12 +1,13 @@
 import { useId } from "react";
 import Icon from "./Icon";
+import { t } from "../../i18n";
 
 function FieldShell({ id, label, hint, error, optional, hideLabel, className = "", children }) {
   return (
     <div className={`field${error ? " field--error" : ""} ${className}`.trim()}>
       {label && (
         <label className={hideLabel ? "sr-only" : "field__label"} htmlFor={id}>
-          {label} {optional && <span className="opt">(optional)</span>}
+          {label} {optional && <span className="opt">{t("(optional)")}</span>}
         </label>
       )}
       {children}

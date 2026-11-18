@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Icon from "./ui/Icon";
 import Button from "./ui/Button";
 import { assetUrl } from "../services/api";
+import { t } from "../i18n";
 
 /**
  * Drag-and-drop image picker with preview.
@@ -12,7 +13,8 @@ import { assetUrl } from "../services/api";
  *   "Keep current receipt" - discard the new file and go back to the saved one
  *   "Remove receipt"       - discard the new file AND delete the saved receipt
  */
-export default function ReceiptDropzone({ file, existingUrl, onChange, onRemoveExisting, error, label = "Receipt photo" }) {
+export default function ReceiptDropzone({ file, existingUrl, onChange, onRemoveExisting, error, label: labelProp }) {
+  const label = labelProp ?? t("Receipt photo");
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
@@ -32,18 +34,18 @@ export default function ReceiptDropzone({ file, existingUrl, onChange, onRemoveE
   return (
     <div className="field">
       <span className="field__label">
-        {label} <span className="opt">(optional)</span>
+        {label} <span className="opt">{t("(optional)")}</span>
       </span>
       {shown ? (
         <div className="dropzone dropzone--filled">
-          <img src={shown} alt="Receipt preview" className="dropzone__preview" />
+          <img src={shown} alt={t("Receipt preview")} className="dropzone__preview" />
           <div className="cluster">
             <Button size="sm" variant="secondary" onClick={() => inputRef.current?.click()}>
-              <Icon name="upload" size={14} /> {file ? "Choose another" : "Replace"}
+              <Icon name="upload" size={14} /> {file ? t("Choose another") : t("Replace")}
             </Button>
             {file && existingUrl && (
               <Button size="sm" variant="ghost" onClick={() => onChange(null)}>
-                Keep current receipt
+                {t("Keep current receipt")}
               </Button>
             )}
             <Button
@@ -54,11 +56,11 @@ export default function ReceiptDropzone({ file, existingUrl, onChange, onRemoveE
                 if (!file || existingUrl) onRemoveExisting?.();
               }}
             >
-              <Icon name="trash" size={14} /> Remove receipt
+              <Icon name="trash" size={14} /> {t("Remove receipt")}
             </Button>
           </div>
           {file && existingUrl && (
-            <p className="muted small">This photo will replace the receipt that is currently saved.</p>
+            <p className="muted small">{t("This photo will replace the receipt that is currently saved.")}</p>
           )}
         </div>
       ) : (
@@ -76,11 +78,11 @@ export default function ReceiptDropzone({ file, existingUrl, onChange, onRemoveE
           }}
         >
           <Icon name="image" size={28} />
-          <p>Drag a photo here, or</p>
+          <p>{t("Drag a photo here, or")}</p>
           <Button size="sm" variant="secondary" onClick={() => inputRef.current?.click()}>
-            Choose file
+            {t("Choose file")}
           </Button>
-          <p className="muted small">JPG, PNG or WebP, up to 5 MB</p>
+          <p className="muted small">{t("JPG, PNG or WebP, up to 5 MB")}</p>
         </div>
       )}
       <input
@@ -88,7 +90,7 @@ export default function ReceiptDropzone({ file, existingUrl, onChange, onRemoveE
         type="file"
         accept="image/jpeg,image/png,image/webp"
         className="sr-only"
-        aria-label={`${label} file`}
+        aria-label={t("{label} file", { label })}
         data-testid="receipt-input"
         onChange={(e) => {
           pick(e.target.files?.[0]);

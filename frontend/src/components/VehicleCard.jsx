@@ -4,6 +4,7 @@ import StatusPill from "./ui/StatusPill";
 import Button from "./ui/Button";
 import { formatDate, formatKm, formatMoney, vehicleSubtitle, vehicleTitle } from "../lib/format";
 import { urgencyLabel } from "../lib/vehicles";
+import { t } from "../i18n";
 
 export default function VehicleCard({ car }) {
   const status = car.status || "unknown";
@@ -19,7 +20,7 @@ export default function VehicleCard({ car }) {
               {vehicleTitle(car)}
             </Link>
           </h2>
-          <p className="muted small truncate">{vehicleSubtitle(car) || "No details yet"}</p>
+          <p className="muted small truncate">{vehicleSubtitle(car) || t("No details yet")}</p>
         </div>
         {car.license_plate && <span className="plate">{car.license_plate}</span>}
       </div>
@@ -28,25 +29,25 @@ export default function VehicleCard({ car }) {
 
       <dl className="vehicle-card__stats">
         <div>
-          <dt>Odometer</dt>
+          <dt>{t("Odometer")}</dt>
           <dd className="num">{formatKm(car.odometer_km)}</dd>
         </div>
         <div>
-          <dt>Total spend</dt>
+          <dt>{t("Total spend")}</dt>
           <dd className="num">{formatMoney(car.total_cost ?? 0)}</dd>
         </div>
         <div>
-          <dt>Last service</dt>
-          <dd>{car.last_service_date ? formatDate(car.last_service_date) : "Never"}</dd>
+          <dt>{t("Last service")}</dt>
+          <dd>{car.last_service_date ? formatDate(car.last_service_date) : t("Never")}</dd>
         </div>
       </dl>
 
       <div className="vehicle-card__actions">
         <Button as={Link} to={`/car/${car.id}/add-record`} variant="secondary" size="sm">
-          <Icon name="plus" size={14} /> Log service
+          <Icon name="plus" size={14} /> {t("Log service")}
         </Button>
-        <Button as={Link} to={`/car/${car.id}`} variant="ghost" size="sm" aria-label={`View ${vehicleTitle(car)}`}>
-          View details <Icon name="arrow-right" size={14} />
+        <Button as={Link} to={`/car/${car.id}`} variant="ghost" size="sm" aria-label={t("View {name}", { name: vehicleTitle(car) })}>
+          {t("View details")} <Icon name="arrow-right" size={14} className="icon--dir" />
         </Button>
       </div>
     </article>

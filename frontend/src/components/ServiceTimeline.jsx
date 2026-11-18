@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import Icon from "./ui/Icon";
 import Button from "./ui/Button";
 import { formatDate, formatKm, formatMoney, yearOf } from "../lib/format";
-import { humanize, treatmentInfo } from "../lib/treatments";
+import { displayTitle, humanize, treatmentInfo } from "../lib/treatments";
 import { assetUrl } from "../services/api";
 import { todayISO } from "../lib/format";
+import { t, tp } from "../i18n";
 
 const same = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
 
@@ -13,19 +14,19 @@ const same = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").
 function detailChips(rec) {
   const chips = [];
   const info = treatmentInfo(rec.treatment_type);
-  if (rec.treatment_type && !same(info.label, rec.title)) {
+  if (rec.treatment_type && !same(info.label, displayTitle(rec.title))) {
     chips.push({ key: "type", icon: info.icon, text: info.label });
   }
   if (rec.treatment_type === "tires") {
-    const count = rec.tires_count ? `${rec.tires_count} ${rec.tires_count === 1 ? "tire" : "tires"}` : "";
+    const count = rec.tires_count ? tp(rec.tires_count, "1 tire", "{n} tires") : "";
     const where = rec.tire_position && rec.tire_position !== "all" ? humanize(rec.tire_position) : "";
-    const text = [count, where].filter(Boolean).join(" - ");
+    const text = [count, where].filter(Boolean).join(" · ");
     if (text) chips.push({ key: "tires", icon: "tire", text });
   } else if (rec.position && rec.position !== "all") {
     chips.push({ key: "position", icon: "disc", text: humanize(rec.position) });
   }
   const parts = (rec.parts_replaced || "").trim();
-  if (parts && !same(parts, rec.title)) {
+  if (parts && !same(parts, rec.title) && !same(displayTitle(parts), displayTitle(rec.title))) {
     chips.push({ key: "parts", icon: "wrench", text: parts });
   }
   return chips;
@@ -35,7 +36,7 @@ export default function ServiceTimeline({ carId, records, flaggedIds, onDelete, 
   const groups = useMemo(() => {
     const map = new Map();
     records.forEach((r) => {
-      const y = yearOf(r.service_date) || "Undated";
+      const y = yearOf(r.service_date) || t("Undated");
       if (!map.has(y)) map.set(y, []);
       map.get(y).push(r);
     });
@@ -47,17 +48,18 @@ export default function ServiceTimeline({ carId, records, flaggedIds, onDelete, 
       {groups.map(([year, items]) => {
         const yearTotal = items.reduce((sum, r) => sum + Number(r.cost || 0), 0);
         return (
-          <section key={year} className="timeline__year" aria-label={`Services in ${year}`}>
+          <section key={year} className="timeline__year" aria-label={t("Services in {year}", { year })}>
             <div className="timeline__year-head">
               <h3 className="timeline__year-label">{year}</h3>
               <span className="timeline__year-meta num">
-                {items.length} service{items.length === 1 ? "" : "s"}
+                {tp(items.length, "1 service", "{n} services")}
                 {yearTotal > 0 ? ` · ${formatMoney(yearTotal)}` : ""}
               </span>
             </div>
             <ol className="timeline__list">
               {items.map((rec) => {
                 const info = treatmentInfo(rec.treatment_type);
+                const title = displayTitle(rec.title);
                 const chips = detailChips(rec);
                 return (
                   <li key={rec.id} className="timeline__item">
@@ -68,7 +70,7 @@ export default function ServiceTimeline({ carId, records, flaggedIds, onDelete, 
                       <div className="timeline__body">
                         <div className="timeline__content">
                           <div className="timeline__head">
-                            <h4 className="timeline__title">{rec.title}</h4>
+                            <h4 className="timeline__title">{title}</h4>
                             <span className="num timeline__cost">{formatMoney(rec.cost ?? 0)}</span>
                             <div className="timeline__actions">
                               <Button
@@ -78,8 +80,8 @@ export default function ServiceTimeline({ carId, records, flaggedIds, onDelete, 
                                 size="sm"
                                 variant="ghost"
                                 className="btn--icon"
-                                aria-label={`Edit ${rec.title}`}
-                                data-tooltip="Edit"
+                                aria-label={t("Edit {title}", { title })}
+                                data-tooltip={t("Edit")}
                               >
                                 <Icon name="edit" size={15} />
                               </Button>
@@ -88,8 +90,8 @@ export default function ServiceTimeline({ carId, records, flaggedIds, onDelete, 
                                 variant="danger-ghost"
                                 className="btn--icon"
                                 onClick={() => onDelete(rec)}
-                                aria-label={`Delete ${rec.title}`}
-                                data-tooltip="Delete"
+                                aria-label={t("Delete {title}", { title })}
+                                data-tooltip={t("Delete")}
                               >
                                 <Icon name="trash" size={15} />
                               </Button>
@@ -108,12 +110,12 @@ export default function ServiceTimeline({ carId, records, flaggedIds, onDelete, 
                           </p>
                           {rec.service_date > todayISO() && (
                             <p className="timeline__scheduled">
-                              <Icon name="clock" size={13} /> Scheduled - not counted for maintenance until this date
+                              <Icon name="clock" size={13} /> {t("Scheduled - not counted for maintenance until this date")}
                             </p>
                           )}
                           {flaggedIds?.has(rec.id) && (
                             <p className="timeline__flag">
-                              <Icon name="alert" size={13} /> Check this entry - see the data checks above
+                              <Icon name="alert" size={13} /> {t("Check this entry - see the data checks above")}
                             </p>
                           )}
                           {chips.length > 0 && (
@@ -132,11 +134,11 @@ export default function ServiceTimeline({ carId, records, flaggedIds, onDelete, 
                             type="button"
                             className="receipt-thumb"
                             onClick={() => onOpenReceipt(rec)}
-                            aria-label={`View receipt for ${rec.title}`}
+                            aria-label={t("View receipt for {title}", { title })}
                           >
                             <img src={assetUrl(rec.image_url)} alt="" loading="lazy" />
                             <span className="receipt-thumb__label">
-                              <Icon name="eye" size={12} /> Receipt
+                              <Icon name="eye" size={12} /> {t("Receipt")}
                             </span>
                           </button>
                         )}

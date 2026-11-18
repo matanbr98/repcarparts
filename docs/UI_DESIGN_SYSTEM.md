@@ -39,3 +39,11 @@ Never hard-code a hex value in a component; add a token instead.
 - Card headers use `.card__header` with `.card__title` and `.card__subtitle`. Inside `.card--flush`, the header gets a bottom border automatically.
 - Lists that link somewhere use `.row-list` and `.row-link`.
 - Breakpoints: 860px (sidebar becomes top bar + bottom tab bar) and 640px (phone layouts).
+
+## Languages (Hebrew default, English)
+
+- `src/i18n/index.js` holds the language state. Hebrew (`he`, right to left) is the default; the choice is saved in `localStorage["lang"]` and mirrored onto `<html lang dir>`. The app tree remounts on a switch.
+- Write UI text in English and wrap it: `t("Log service")`, `t("Due {date}", { date })`, `tp(n, "1 service", "{n} services")`. The English string is the key; add the Hebrew translation to `src/i18n/he.js`. `src/i18n/i18n.test.js` fails if a `t()`/`tp()` string has no translation or a translation drops a `{placeholder}`.
+- Keep stored data language-neutral: service titles are saved with the English treatment label and translated on display (`displayTitle`, `treatmentLabel`, `itemLabel`). Backend data-check warnings are translated by `code` (`lib/warnings.js`). Other server error messages are shown as the server sends them (English).
+- Layout CSS uses logical properties (`margin-inline-start`, `inset-inline-end`, `text-align: start`) so it mirrors in RTL. Add `className="icon--dir"` to icons that point a direction (back, chevrons, arrows) so they flip in Hebrew. Wrap mixed number strings such as "5 / 6" in `dir="ltr"`.
+- The language can be switched from the account menu, the sign-in pages and Profile → Language.
