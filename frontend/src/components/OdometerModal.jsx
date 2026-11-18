@@ -5,6 +5,7 @@ import { Input } from "./ui/Field";
 import { useToast } from "./ui/toastContext";
 import { api } from "../services/api";
 import { formatDate, formatKm } from "../lib/format";
+import { t } from "../i18n";
 
 /** Update the current odometer without logging a service. */
 export default function OdometerModal({ open, carId, odometer, onClose, onSaved }) {
@@ -26,56 +27,56 @@ export default function OdometerModal({ open, carId, odometer, onClose, onSaved 
     e.preventDefault();
     const n = Number(value);
     if (value === "" || !Number.isInteger(n) || n < 0) {
-      setError("Enter the current odometer reading in whole kilometres.");
+      setError(t("Enter the current odometer reading in whole kilometres."));
       return;
     }
     if (floor != null && n < floor) {
-      setError(`Must be at least ${formatKm(floor)}, the highest reading in the service history.`);
+      setError(t("Must be at least {km}, the highest reading in the service history.", { km: formatKm(floor) }));
       return;
     }
     setBusy(true);
     setError("");
     try {
       const res = await api.setOdometer(carId, n);
-      toast.success("Odometer updated");
+      toast.success(t("Odometer updated"));
       onSaved?.(res);
     } catch (err) {
-      setError(err.fields?.odometer_km || err.message || "Could not update the odometer.");
+      setError(err.fields?.odometer_km || err.message || t("Could not update the odometer."));
     } finally {
       setBusy(false);
     }
   }
 
-  let hint = "Used to work out when mileage-based maintenance is due.";
+  let hint = t("Used to work out when mileage-based maintenance is due.");
   if (odometer?.odometer_km != null) {
-    const suffix =
+    const km = formatKm(odometer.odometer_km);
+    hint =
       odometer.source === "manual" && odometer.manual_updated_at
-        ? `, updated ${formatDate(odometer.manual_updated_at)}`
+        ? t("Currently {km}, updated {date}.", { km, date: formatDate(odometer.manual_updated_at) })
         : odometer.source === "service"
-          ? ", taken from the latest service"
-          : "";
-    hint = `Currently ${formatKm(odometer.odometer_km)}${suffix}.`;
+          ? t("Currently {km}, taken from the latest service.", { km })
+          : t("Currently {km}.", { km });
   }
 
   return (
     <Modal
       open={open}
       onClose={busy ? undefined : onClose}
-      title="Update odometer"
+      title={t("Update odometer")}
       actions={
         <>
           <Button variant="ghost" onClick={onClose} disabled={busy}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button variant="primary" type="submit" form="odometer-form" loading={busy}>
-            Save
+            {t("Save")}
           </Button>
         </>
       }
     >
       <form id="odometer-form" onSubmit={submit} className="stack">
         <Input
-          label="Current odometer (km)"
+          label={t("Current odometer (km)")}
           type="number"
           inputMode="numeric"
           min={floor ?? 0}

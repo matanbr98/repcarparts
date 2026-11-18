@@ -14,10 +14,13 @@ import ChangePassword from "./pages/ChangePassword";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import Reminders from "./pages/Reminders";
 import Profile from "./pages/Profile";
+import { useLanguage } from "./i18n";
 
 export default function App() {
+  // Remount the tree on a language switch so every label and number is re-rendered.
+  const { lang } = useLanguage();
   return (
-    <ToastProvider>
+    <ToastProvider key={lang}>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { ToastContext } from "./toastContext";
 import Icon from "./Icon";
+import { t } from "../../i18n";
 
 export default function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
@@ -22,16 +23,16 @@ export default function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="toasts" role="region" aria-label="Notifications" aria-live="polite">
-        {toasts.map((t) => (
-          <div key={t.id} className={`toast toast--${t.kind}`} role={t.kind === "error" ? "alert" : "status"}>
+      <div className="toasts" role="region" aria-label={t("Notifications")} aria-live="polite">
+        {toasts.map((item) => (
+          <div key={item.id} className={`toast toast--${item.kind}`} role={item.kind === "error" ? "alert" : "status"}>
             <Icon
-              name={t.kind === "error" ? "alert" : t.kind === "info" ? "info" : "check-circle"}
+              name={item.kind === "error" ? "alert" : item.kind === "info" ? "info" : "check-circle"}
               size={18}
               className="toast__icon"
             />
-            <span>{t.message}</span>
-            <button type="button" className="toast__close" aria-label="Dismiss notification" onClick={() => dismiss(t.id)}>
+            <span>{item.message}</span>
+            <button type="button" className="toast__close" aria-label={t("Dismiss notification")} onClick={() => dismiss(item.id)}>
               <Icon name="x" size={16} />
             </button>
           </div>

@@ -11,7 +11,7 @@ export default function PageHeader({ title, subtitle, back, actions, leading, me
     <header className="page-header">
       {back && (
         <Link to={back.to} className="page-header__back">
-          <Icon name="back" size={14} /> {back.label}
+          <Icon name="back" size={14} className="icon--dir" /> {back.label}
         </Link>
       )}
       <div className="page-header__row">

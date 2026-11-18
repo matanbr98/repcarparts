@@ -1,4 +1,5 @@
 import { formatMoney, formatNumber, monthLabel } from "../lib/format";
+import { t } from "../i18n";
 
 const W = 600;
 const H = 200;
@@ -16,7 +17,7 @@ export default function SpendChart({ data = [] }) {
 
   return (
     <figure className="spend-chart">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Monthly spend: ${summary}`} preserveAspectRatio="xMidYMid meet">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t("Monthly spend: {summary}", { summary })} preserveAspectRatio="xMidYMid meet">
         <line x1={PAD.left} x2={W - PAD.right} y1={H - PAD.bottom} y2={H - PAD.bottom} stroke="var(--border-strong)" />
         {[0.5, 1].map((f) => (
           <line key={f} x1={PAD.left} x2={W - PAD.right} y1={H - PAD.bottom - innerH * f} y2={H - PAD.bottom - innerH * f} stroke="var(--border-subtle)" strokeDasharray="3 4" />

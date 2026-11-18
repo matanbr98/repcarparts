@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
-import { TREATMENTS, treatmentInfo } from "../lib/treatments";
+import { TREATMENTS } from "../lib/treatments";
 import { todayISO } from "../lib/format";
 
 const MAX_KM = 3000000;
@@ -21,6 +21,8 @@ import Icon from "./ui/Icon";
 import { Input, Select, Textarea } from "./ui/Field";
 import { useToast } from "./ui/toastContext";
 import ReceiptDropzone from "./ReceiptDropzone";
+import { t } from "../i18n";
+import { warningMessage } from "../lib/warnings";
 
 function initialState(rec) {
   if (!rec) {
@@ -65,7 +67,8 @@ export default function ServiceForm({ carId, record = null }) {
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const info = treatmentInfo(form.treatment_type);
+  // canonical English label: saved as the title so stored data is language-neutral
+  const canonicalLabel = TREATMENTS.find((x) => x.value === form.treatment_type)?.label || "Service";
   const fields = new Set(TREATMENTS.find((t) => t.value === form.treatment_type)?.fields || []);
   const showPosition = fields.has("position");
   const showTires = fields.has("tires");
@@ -89,25 +92,25 @@ export default function ServiceForm({ carId, record = null }) {
 
   function validate() {
     const e = {};
-    if (!form.service_date) e.service_date = "Choose the service date.";
-    else if (form.service_date < "1900-01-01") e.service_date = "That date is too far in the past.";
-    else if (form.service_date > isoPlusDays(MAX_AHEAD_DAYS)) e.service_date = "That date is more than a year ahead. Check the year.";
-    if (badInput.odometer_km) e.odometer_km = "Enter digits only, for example 87500.";
-    if (badInput.cost) e.cost = "Enter digits only, for example 250.";
-    if (showCustom && !form.custom_title.trim()) e.custom_title = "Enter a title for this service.";
+    if (!form.service_date) e.service_date = t("Choose the service date.");
+    else if (form.service_date < "1900-01-01") e.service_date = t("That date is too far in the past.");
+    else if (form.service_date > isoPlusDays(MAX_AHEAD_DAYS)) e.service_date = t("That date is more than a year ahead. Check the year.");
+    if (badInput.odometer_km) e.odometer_km = t("Enter digits only, for example 87500.");
+    if (badInput.cost) e.cost = t("Enter digits only, for example 250.");
+    if (showCustom && !form.custom_title.trim()) e.custom_title = t("Enter a title for this service.");
     if (!e.odometer_km && form.odometer_km !== "") {
       const n = Number(form.odometer_km);
-      if (!Number.isInteger(n) || n < 0) e.odometer_km = "Enter a whole number of kilometres, 0 or more.";
-      else if (n > MAX_KM) e.odometer_km = "That odometer reading is too high. Check for an extra digit.";
+      if (!Number.isInteger(n) || n < 0) e.odometer_km = t("Enter a whole number of kilometres, 0 or more.");
+      else if (n > MAX_KM) e.odometer_km = t("That odometer reading is too high. Check for an extra digit.");
     }
     if (!e.cost && form.cost !== "") {
       const n = Number(form.cost);
-      if (!Number.isInteger(n) || n < 0) e.cost = "Enter a whole amount, 0 or more.";
-      else if (n > MAX_COST) e.cost = "That amount is too high. Check for an extra digit.";
+      if (!Number.isInteger(n) || n < 0) e.cost = t("Enter a whole amount, 0 or more.");
+      else if (n > MAX_COST) e.cost = t("That amount is too high. Check for an extra digit.");
     }
     if (showTires && (!isEdit || form.tires_count !== original.tires_count)) {
       const n = Number(form.tires_count);
-      if (!Number.isInteger(n) || n < 1 || n > 4) e.tires_count = "Choose between 1 and 4 tires.";
+      if (!Number.isInteger(n) || n < 1 || n > 4) e.tires_count = t("Choose between 1 and 4 tires.");
     }
     if (file) {
       const msg = validateImage(file);
@@ -119,12 +122,14 @@ export default function ServiceForm({ carId, record = null }) {
   function resolveTitle() {
     if (showCustom) return form.custom_title.trim();
     if (isEdit && record.treatment_type === form.treatment_type && record.title) return record.title;
-    return info.label;
+    return canonicalLabel;
   }
 
   function notifyWarnings(saved) {
     const w = saved?.warnings || [];
-    if (w.length) toast.info(`Saved. Heads up: ${w[0].message}${w.length > 1 ? ` (+${w.length - 1} more on the vehicle page)` : ""}`);
+    if (!w.length) return;
+    const more = w.length > 1 ? t(" (+{n} more on the vehicle page)", { n: w.length - 1 }) : "";
+    toast.info(t("Saved. Heads up: {message}", { message: warningMessage(w[0]) }) + more);
   }
 
   async function onSubmit(ev) {
@@ -162,7 +167,7 @@ export default function ServiceForm({ carId, record = null }) {
 
         const imageChange = !!file || (removeExisting && !!record.image_url);
         if (Object.keys(patch).length === 0 && !imageChange) {
-          toast.info("No changes to save");
+          toast.info(t("No changes to save"));
           navigate(`/car/${carId}`);
           return;
         }
@@ -173,11 +178,11 @@ export default function ServiceForm({ carId, record = null }) {
           else if (removeExisting && record.image_url) await api.removeRecordImage(carId, record.id);
         } catch (imgErr) {
           // the details are already saved: say so instead of reporting a failed save
-          toast.error(`Details saved, but the receipt was not updated: ${imgErr.message || "upload failed"}`);
+          toast.error(t("Details saved, but the receipt was not updated: {reason}", { reason: imgErr.message || t("upload failed") }));
           navigate(`/car/${carId}`);
           return;
         }
-        toast.success("Service updated");
+        toast.success(t("Service updated"));
         notifyWarnings(saved);
       } else {
         const data = new FormData();
@@ -195,7 +200,7 @@ export default function ServiceForm({ carId, record = null }) {
         }
         if (file) data.append("image", file);
         const created = await api.addRecord(carId, data);
-        toast.success("Service logged");
+        toast.success(t("Service logged"));
         notifyWarnings(created);
       }
       navigate(`/car/${carId}`);
@@ -206,7 +211,7 @@ export default function ServiceForm({ carId, record = null }) {
         mapped[k === "title" ? "custom_title" : k === "image" ? "image" : k] = v;
       });
       if (Object.keys(mapped).length) setErrors((p) => ({ ...p, ...mapped }));
-      setFormError(err.message || "Could not save the service. Please try again.");
+      setFormError(err.message || t("Could not save the service. Please try again."));
       setSaving(false);
     }
   }
@@ -214,23 +219,23 @@ export default function ServiceForm({ carId, record = null }) {
   return (
     <form className="stack-lg" onSubmit={onSubmit} noValidate>
       <fieldset className="service-form__types">
-        <legend className="field__label">What was done?</legend>
-        <div className="treatment-grid" role="radiogroup" aria-label="Treatment type">
-          {TREATMENTS.map((t) => (
+        <legend className="field__label">{t("What was done?")}</legend>
+        <div className="treatment-grid" role="radiogroup" aria-label={t("Treatment type")}>
+          {TREATMENTS.map((opt) => (
             <label
-              key={t.value}
-              className={`treatment-tile${form.treatment_type === t.value ? " treatment-tile--active" : ""}`}
+              key={opt.value}
+              className={`treatment-tile${form.treatment_type === opt.value ? " treatment-tile--active" : ""}`}
             >
               <input
                 type="radio"
                 name="treatment_type"
-                value={t.value}
-                checked={form.treatment_type === t.value}
-                onChange={() => chooseType(t.value)}
+                value={opt.value}
+                checked={form.treatment_type === opt.value}
+                onChange={() => chooseType(opt.value)}
                 className="sr-only"
               />
-              <Icon name={t.icon} size={24} />
-              <span>{t.label}</span>
+              <Icon name={opt.icon} size={24} />
+              <span>{t(opt.label)}</span>
             </label>
           ))}
         </div>
@@ -238,8 +243,8 @@ export default function ServiceForm({ carId, record = null }) {
 
       {showCustom && (
         <Input
-          label="Service title"
-          placeholder="e.g. AC service"
+          label={t("Service title")}
+          placeholder={t("e.g. AC service")}
           value={form.custom_title}
           onChange={set("custom_title")}
           error={errors.custom_title}
@@ -248,17 +253,17 @@ export default function ServiceForm({ carId, record = null }) {
       )}
 
       {showPosition && (
-        <Select label="Position" value={form.position} onChange={set("position")}>
-          <option value="front">Front</option>
-          <option value="rear">Rear</option>
-          <option value="all">All</option>
+        <Select label={t("Position")} value={form.position} onChange={set("position")}>
+          <option value="front">{t("Front")}</option>
+          <option value="rear">{t("Rear")}</option>
+          <option value="all">{t("All")}</option>
         </Select>
       )}
 
       {showTires && (
         <div className="grid-2">
           <Input
-            label="Tires replaced"
+            label={t("Tires replaced")}
             type="number"
             inputMode="numeric"
             min="1"
@@ -267,36 +272,36 @@ export default function ServiceForm({ carId, record = null }) {
             onChange={set("tires_count")}
             error={errors.tires_count}
           />
-          <Select label="Tire position" value={form.tire_position} onChange={set("tire_position")}>
-            <option value="all">All</option>
-            <option value="front">Front</option>
-            <option value="rear">Rear</option>
-            <option value="front_left">Front left</option>
-            <option value="front_right">Front right</option>
-            <option value="rear_left">Rear left</option>
-            <option value="rear_right">Rear right</option>
+          <Select label={t("Tire position")} value={form.tire_position} onChange={set("tire_position")}>
+            <option value="all">{t("All")}</option>
+            <option value="front">{t("Front")}</option>
+            <option value="rear">{t("Rear")}</option>
+            <option value="front_left">{t("Front left")}</option>
+            <option value="front_right">{t("Front right")}</option>
+            <option value="rear_left">{t("Rear left")}</option>
+            <option value="rear_right">{t("Rear right")}</option>
           </Select>
         </div>
       )}
 
       <div className="grid-2">
         <Input
-          label="Date"
+          label={t("Date")}
           type="date"
           min="1900-01-01"
           max={isoPlusDays(MAX_AHEAD_DAYS)}
           value={form.service_date}
           onChange={set("service_date")}
           error={errors.service_date}
-          hint={form.service_date > todayISO() && !errors.service_date ? "This date is in the future." : undefined}
+          hint={form.service_date > todayISO() && !errors.service_date ? t("This date is in the future.") : undefined}
         />
         <Input
-          label="Odometer (km)"
+          label={t("Odometer (km)")}
           type="number"
           inputMode="numeric"
           min="0"
           max={MAX_KM}
-          placeholder="e.g. 87500"
+          placeholder={t("e.g. 87500")}
           optional
           value={form.odometer_km}
           onChange={set("odometer_km")}
@@ -305,19 +310,19 @@ export default function ServiceForm({ carId, record = null }) {
       </div>
 
       <Input
-        label="Cost (ILS)"
+        label={t("Cost (ILS)")}
         type="number"
         inputMode="numeric"
         min="0"
         max={MAX_COST}
-        placeholder="e.g. 250"
+        placeholder={t("e.g. 250")}
         optional
         value={form.cost}
         onChange={set("cost")}
         error={errors.cost}
       />
 
-      <Textarea label="Notes" optional value={form.notes} onChange={set("notes")} maxLength={1000} />
+      <Textarea label={t("Notes")} optional value={form.notes} onChange={set("notes")} maxLength={1000} />
 
       <ReceiptDropzone
         file={file}
@@ -346,10 +351,10 @@ export default function ServiceForm({ carId, record = null }) {
 
       <div className="form-actions form-actions--bar">
         <Button type="submit" variant="primary" size="lg" loading={saving}>
-          {isEdit ? "Save changes" : "Save service"}
+          {isEdit ? t("Save changes") : t("Save service")}
         </Button>
         <Button variant="ghost" size="lg" onClick={() => navigate(`/car/${carId}`)} disabled={saving}>
-          Cancel
+          {t("Cancel")}
         </Button>
       </div>
     </form>

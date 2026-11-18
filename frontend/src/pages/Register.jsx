@@ -7,6 +7,7 @@ import Button from "../components/ui/Button";
 import Icon from "../components/ui/Icon";
 import { Input } from "../components/ui/Field";
 import { useToast } from "../components/ui/toastContext";
+import { t } from "../i18n";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_RE = /^[A-Za-z0-9_.-]{3,40}$/;
@@ -31,9 +32,9 @@ export default function Register() {
     e.preventDefault();
     setFormError("");
     const v = {};
-    if (!USERNAME_RE.test(form.username)) v.username = "3-40 characters: letters, numbers, dot, dash or underscore.";
-    if (form.password.length < 8) v.password = "Use at least 8 characters.";
-    if (form.email.trim() && !EMAIL_RE.test(form.email.trim())) v.email = "Enter a valid email address.";
+    if (!USERNAME_RE.test(form.username)) v.username = t("3-40 characters: letters, numbers, dot, dash or underscore.");
+    if (form.password.length < 8) v.password = t("Use at least 8 characters.");
+    if (form.email.trim() && !EMAIL_RE.test(form.email.trim())) v.email = t("Enter a valid email address.");
     setErrors(v);
     if (Object.keys(v).length) return;
 
@@ -46,33 +47,33 @@ export default function Register() {
         phone: form.phone.trim(),
         email: form.email.trim() || null,
       });
-      toast.success("Account created. You can log in now.");
+      toast.success(t("Account created. You can log in now."));
       navigate("/login", { replace: true });
     } catch (err) {
       setErrors((p) => ({ ...p, ...(err.fields || {}) }));
-      setFormError(err.message || "Could not create the account.");
+      setFormError(err.message || t("Could not create the account."));
       setBusy(false);
     }
   }
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Keep every service, receipt and reminder in one place."
+      title={t("Create your account")}
+      subtitle={t("Keep every service, receipt and reminder in one place.")}
       footer={
         <>
-          Already have an account? <Link to="/login">Log in</Link>
+          {t("Already have an account?")} <Link to="/login">{t("Log in")}</Link>
         </>
       }
     >
       <form className="stack" onSubmit={onSubmit} noValidate>
-        <Input label="Full name" optional autoComplete="name" value={form.name} onChange={set("name")} error={errors.name} />
+        <Input label={t("Full name")} optional autoComplete="name" value={form.name} onChange={set("name")} error={errors.name} />
         <div className="grid-2">
-          <Input label="Phone" optional type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} error={errors.phone} />
-          <Input label="Email" optional type="email" autoComplete="email" value={form.email} onChange={set("email")} error={errors.email} />
+          <Input label={t("Phone")} optional type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} error={errors.phone} />
+          <Input label={t("Email")} optional type="email" autoComplete="email" value={form.email} onChange={set("email")} error={errors.email} />
         </div>
         <Input
-          label="Username"
+          label={t("Username")}
           autoComplete="username"
           autoCapitalize="none"
           value={form.username}
@@ -80,10 +81,10 @@ export default function Register() {
           error={errors.username}
         />
         <Input
-          label="Password"
+          label={t("Password")}
           type="password"
           autoComplete="new-password"
-          hint="At least 8 characters."
+          hint={t("At least 8 characters.")}
           value={form.password}
           onChange={set("password")}
           error={errors.password}
@@ -94,7 +95,7 @@ export default function Register() {
           </p>
         )}
         <Button type="submit" variant="primary" size="lg" block loading={busy}>
-          Create account
+          {t("Create account")}
         </Button>
       </form>
     </AuthLayout>

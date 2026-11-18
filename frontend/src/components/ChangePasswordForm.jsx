@@ -5,13 +5,14 @@ import Button from "./ui/Button";
 import Icon from "./ui/Icon";
 import { Input } from "./ui/Field";
 import { useToast } from "./ui/toastContext";
+import { t } from "../i18n";
 
 /**
  * Password change. The server bumps `pwd_v` on success, which invalidates old tokens, so:
  * if the response carries a fresh `access_token` we keep the session, otherwise we sign the user out
  * and the route guard sends them to /login.
  */
-export default function ChangePasswordForm({ submitLabel = "Update password", onDone }) {
+export default function ChangePasswordForm({ submitLabel, onDone }) {
   const toast = useToast();
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [errors, setErrors] = useState({});
@@ -27,10 +28,10 @@ export default function ChangePasswordForm({ submitLabel = "Update password", on
     e.preventDefault();
     setFormError("");
     const v = {};
-    if (!form.current) v.current = "Enter your current password.";
-    if (form.next.length < 8) v.next = "Use at least 8 characters.";
-    else if (form.next === form.current) v.next = "Choose a password different from the current one.";
-    if (form.confirm !== form.next) v.confirm = "Passwords do not match.";
+    if (!form.current) v.current = t("Enter your current password.");
+    if (form.next.length < 8) v.next = t("Use at least 8 characters.");
+    else if (form.next === form.current) v.next = t("Choose a password different from the current one.");
+    if (form.confirm !== form.next) v.confirm = t("Passwords do not match.");
     setErrors(v);
     if (Object.keys(v).length) return;
 
@@ -40,10 +41,10 @@ export default function ChangePasswordForm({ submitLabel = "Update password", on
       const { role } = getAuth();
       if (res?.access_token) {
         setAuth({ token: res.access_token, role: res.role || role, mustChangePassword: false });
-        toast.success("Password updated");
+        toast.success(t("Password updated"));
       } else {
         clearAuth();
-        toast.success("Password updated. Please sign in again.");
+        toast.success(t("Password updated. Please sign in again."));
       }
       setForm({ current: "", next: "", confirm: "" });
       if (res?.access_token) onDone?.();
@@ -53,7 +54,7 @@ export default function ChangePasswordForm({ submitLabel = "Update password", on
         current: f.current_password,
         next: f.new_password,
       });
-      setFormError(err.message || "Could not change the password.");
+      setFormError(err.message || t("Could not change the password."));
     } finally {
       setSaving(false);
     }
@@ -62,7 +63,7 @@ export default function ChangePasswordForm({ submitLabel = "Update password", on
   return (
     <form className="stack" onSubmit={onSubmit} noValidate>
       <Input
-        label="Current password"
+        label={t("Current password")}
         type="password"
         autoComplete="current-password"
         value={form.current}
@@ -70,16 +71,16 @@ export default function ChangePasswordForm({ submitLabel = "Update password", on
         error={errors.current}
       />
       <Input
-        label="New password"
+        label={t("New password")}
         type="password"
         autoComplete="new-password"
-        hint="At least 8 characters."
+        hint={t("At least 8 characters.")}
         value={form.next}
         onChange={set("next")}
         error={errors.next}
       />
       <Input
-        label="Confirm new password"
+        label={t("Confirm new password")}
         type="password"
         autoComplete="new-password"
         value={form.confirm}
@@ -93,7 +94,7 @@ export default function ChangePasswordForm({ submitLabel = "Update password", on
       )}
       <div className="form-actions">
         <Button type="submit" variant="primary" loading={saving}>
-          {submitLabel}
+          {submitLabel ?? t("Update password")}
         </Button>
       </div>
     </form>

@@ -13,6 +13,8 @@ import ChangePasswordForm from "../components/ChangePasswordForm";
 import { validateImage } from "../lib/images";
 import { notifyProfileUpdated } from "../lib/profileEvents";
 import { useAuth } from "../hooks/useAuth";
+import { t } from "../i18n";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,7 +35,7 @@ function ProfileForm({ me, onSaved }) {
   async function onSubmit(e) {
     e.preventDefault();
     if (form.email.trim() && !EMAIL_RE.test(form.email.trim())) {
-      setErrors({ email: "Enter a valid email address." });
+      setErrors({ email: t("Enter a valid email address.") });
       return;
     }
     setSaving(true);
@@ -45,7 +47,7 @@ function ProfileForm({ me, onSaved }) {
       const updated = await api.updateMe(patch);
       onSaved(updated);
       notifyProfileUpdated();
-      toast.success("Profile saved");
+      toast.success(t("Profile saved"));
     } catch (err) {
       setErrors({ ...(err.fields || {}), form: err.message });
     } finally {
@@ -55,10 +57,10 @@ function ProfileForm({ me, onSaved }) {
 
   return (
     <form className="stack" onSubmit={onSubmit} noValidate>
-      <Input label="Name" autoComplete="name" value={form.name} onChange={set("name")} error={errors.name} />
+      <Input label={t("Name")} autoComplete="name" value={form.name} onChange={set("name")} error={errors.name} />
       <div className="grid-2">
-        <Input label="Phone" type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} error={errors.phone} />
-        <Input label="Email" type="email" autoComplete="email" value={form.email} onChange={set("email")} error={errors.email} />
+        <Input label={t("Phone")} type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} error={errors.phone} />
+        <Input label={t("Email")} type="email" autoComplete="email" value={form.email} onChange={set("email")} error={errors.email} />
       </div>
       {errors.form && (
         <p className="form-error" role="alert">
@@ -67,7 +69,7 @@ function ProfileForm({ me, onSaved }) {
       )}
       <div className="form-actions">
         <Button type="submit" variant="primary" loading={saving} disabled={!dirty}>
-          Save details
+          {t("Save details")}
         </Button>
       </div>
     </form>
@@ -106,9 +108,9 @@ function PictureUploader({ me, onUpdated }) {
       notifyProfileUpdated();
       setFile(null);
       setPreview("");
-      toast.success("Profile picture updated");
+      toast.success(t("Profile picture updated"));
     } catch (err) {
-      setError(err.message || "Upload failed.");
+      setError(err.message || t("Upload failed."));
     } finally {
       setSaving(false);
     }
@@ -118,7 +120,7 @@ function PictureUploader({ me, onUpdated }) {
     <div className="cluster profile-pic">
       {file && preview ? (
         <span className="avatar" style={{ width: 72, height: 72 }}>
-          <img src={preview} alt="New profile picture preview" />
+          <img src={preview} alt={t("New profile picture preview")} />
         </span>
       ) : (
         <Avatar url={me.profile_image_url} name={me.username} size={72} />
@@ -126,15 +128,15 @@ function PictureUploader({ me, onUpdated }) {
       <div className="stack">
         <div className="cluster">
           <Button variant="secondary" onClick={() => inputRef.current?.click()}>
-            <Icon name="upload" size={16} /> {file ? "Choose another" : "Change picture"}
+            <Icon name="upload" size={16} /> {file ? t("Choose another") : t("Change picture")}
           </Button>
           {file && (
             <>
               <Button variant="primary" onClick={upload} loading={saving}>
-                Save picture
+                {t("Save picture")}
               </Button>
               <Button variant="ghost" onClick={() => setFile(null)} disabled={saving}>
-                Cancel
+                {t("Cancel")}
               </Button>
             </>
           )}
@@ -144,7 +146,7 @@ function PictureUploader({ me, onUpdated }) {
           type="file"
           accept="image/jpeg,image/png,image/webp"
           className="sr-only"
-          aria-label="Profile picture file"
+          aria-label={t("Profile picture file")}
           onChange={choose}
         />
         {error ? (
@@ -152,7 +154,7 @@ function PictureUploader({ me, onUpdated }) {
             {error}
           </span>
         ) : (
-          <span className="field__hint">JPG, PNG or WebP, up to 5 MB.</span>
+          <span className="field__hint">{t("JPG, PNG or WebP, up to 5 MB.")}</span>
         )}
       </div>
     </div>
@@ -178,22 +180,22 @@ export default function Profile() {
   return (
     <div className="stack-lg profile-page">
       <PageHeader
-        title="Profile"
-        subtitle="Your account details, picture and password."
+        title={t("Profile")}
+        subtitle={t("Your account details, picture and password.")}
         leading={data && <Avatar url={data.profile_image_url} name={data.username} size={48} />}
         meta={
           data && (
             <>
               <span className="muted small">
-                Signed in as <strong className="strong">{data.username}</strong>
+                {t("Signed in as")} <strong className="strong">{data.username}</strong>
               </span>
-              <span className={`badge ${isManager ? "badge--accent" : ""}`}>{isManager ? "Manager" : "Owner"}</span>
+              <span className={`badge ${isManager ? "badge--accent" : ""}`}>{isManager ? t("Manager") : t("Owner")}</span>
             </>
           )
         }
       />
       {error && !data ? (
-        <ErrorState error={error} title="Could not load your profile" onRetry={reload} />
+        <ErrorState error={error} title={t("Could not load your profile")} onRetry={reload} />
       ) : loading && !data ? (
         <>
           <SkeletonCard />
@@ -201,17 +203,20 @@ export default function Profile() {
         </>
       ) : (
         <div className="settings">
-          <SettingsSection title="Profile picture" description="Shown in the sidebar and to your manager.">
+          <SettingsSection title={t("Profile picture")} description={t("Shown in the sidebar and to your manager.")}>
             <PictureUploader me={data} onUpdated={(u) => setData((p) => ({ ...p, ...u }))} />
           </SettingsSection>
-          <SettingsSection title="Contact details" description="How your manager can reach you about your vehicles.">
+          <SettingsSection title={t("Contact details")} description={t("How your manager can reach you about your vehicles.")}>
             <ProfileForm me={data} onSaved={(u) => setData((p) => ({ ...p, ...u }))} />
           </SettingsSection>
           <SettingsSection
-            title="Password"
-            description="Use at least 8 characters. Older sessions are signed out when it changes."
+            title={t("Password")}
+            description={t("Use at least 8 characters. Older sessions are signed out when it changes.")}
           >
             <ChangePasswordForm />
+          </SettingsSection>
+          <SettingsSection title={t("Language")} description={t("The language of the whole site. Hebrew is shown right to left.")}>
+            <LanguageSwitcher />
           </SettingsSection>
         </div>
       )}
